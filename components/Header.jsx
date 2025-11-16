@@ -26,13 +26,16 @@ export default function Header() {
     router.push("/");
   };
 
-  // Menu items but "Profil" hidden when logged out
+  // Menu items - "Projek" and "Profil" hidden when logged out
   const menu = [
     { name: "Beranda", href: "/" },
     { name: "Katalog", href: "/katalog" },
     { name: "Riwayat", href: "/history-request" },
-    // only show this when logged in
-    ...(isLoggedIn ? [{ name: "Profil", href: "/profil/1" }] : []),
+    // only show these when logged in
+    ...(isLoggedIn ? [
+      { name: "Projek", href: "/proyek-saya" },
+      { name: "Profil", href: "/profil/1" }
+    ] : []),
   ];
 
   return (
