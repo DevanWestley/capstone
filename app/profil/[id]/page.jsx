@@ -11,6 +11,7 @@ export default function ProfileDetailPage() {
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const [members, setMembers] = useState([
     { id: 1, name: "Anggota 1", nim: "115230129", jurusan: "Teknik Informatika" },
     { id: 2, name: "Anggota 2", nim: "115230130", jurusan: "Sistem Informasi" },
@@ -22,7 +23,6 @@ export default function ProfileDetailPage() {
       try {
         setLoading(true);
 
-        // mock data sesuai desain
         const data = {
           title: "Kelompok Lorem ipsum dolor sit amet, consectetur adipiscing elit",
           email: "kelompok@example.com",
@@ -90,20 +90,19 @@ export default function ProfileDetailPage() {
             </span>
             <span>›</span>
             <span className="text-[#004A74] font-semibold">
-              Profile
+              Profil
             </span>
           </div>
 
-          {/* Header dengan Edit Button */}
+          {/* Header + Edit Button */}
           <div className="mb-8 flex items-center justify-between">
             <div className="inline-block">
               <h1 className="text-3xl font-bold text-[#004A74]">
-                Profile Kelompok
+                Profil Kelompok
               </h1>
               <div className="h-1 bg-[#FED400] rounded mt-2"></div>
             </div>
 
-            {/* Edit button */}
             <button
               onClick={handleEdit}
               className="flex items-center gap-2 px-4 py-2 bg-[#004A74] text-white rounded-lg shadow hover:bg-[#003d5e] transition"
@@ -118,14 +117,12 @@ export default function ProfileDetailPage() {
 
           {/* Profile Card */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 flex flex-col lg:flex-row gap-8 items-start mb-8">
-            {/* Banner */}
             <div className="w-full lg:w-[420px] flex-shrink-0">
               <div className="rounded-lg overflow-hidden border border-gray-200 bg-gradient-to-br from-red-100 via-orange-50 to-pink-100">
                 <img src={project.thumbnail} alt="banner" className="w-full h-44 object-cover" />
               </div>
             </div>
 
-            {/* Info */}
             <div className="flex-1 w-full">
               <h2 className="text-2xl font-bold text-[#004A74] leading-snug">{project.title}</h2>
 
@@ -140,7 +137,6 @@ export default function ProfileDetailPage() {
                 </div>
               </div>
 
-              {/* Divider */}
               <div className="mt-6 border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-semibold text-[#004A74] mb-3">Deskripsi Kelompok</h3>
                 <p className="text-gray-700 text-justify leading-relaxed">{project.description}</p>
@@ -164,6 +160,7 @@ export default function ProfileDetailPage() {
             <div className="space-y-4">
               {members.map((m) => (
                 <div key={m.id} className="flex flex-col md:flex-row items-start md:items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-4 gap-4">
+
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 flex-shrink-0">
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -178,6 +175,8 @@ export default function ProfileDetailPage() {
                   </div>
 
                   <div className="flex items-center gap-3 w-full md:w-auto">
+
+                    {/* Lihat Portofolio */}
                     <button className="flex-1 md:flex-none px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition flex items-center justify-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -186,17 +185,31 @@ export default function ProfileDetailPage() {
                       Lihat Portofolio
                     </button>
 
+                    {/* Lihat LinkedIn */}
                     <button className="flex-1 md:flex-none px-3 py-2 border border-[#004A74] text-[#004A74] rounded-lg text-sm font-medium hover:bg-blue-50 transition flex items-center justify-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M19 0h-14a5 5 0 00-5 5v14a5 5 0 005 5h14a5 5 0 005-5v-14a5 5 0 00-5-5zm-11.5 20h-3v-10h3v10zm-1.5-11.3a1.7 1.7 0 110-3.4 1.7 1.7 0 010 3.4zm13 11.3h-3v-5.5c0-1.3-.5-2.2-1.8-2.2-1 0-1.6.7-1.9 1.4-.1.2-.1.6-.1.9v5.4h-3v-10h3v1.4c.4-.6 1.3-1.4 3-1.4 2.2 0 3.8 1.4 3.8 4.4v5.6z" />
                       </svg>
                       Lihat LinkedIn
                     </button>
-                  </div>
 
+                    {/* ⭐ Edit Anggota */}
+                    <button
+                      onClick={() => router.push(`/profil/${id}/editMember/${m.id}`)}
+                      className="flex-1 md:flex-none px-3 py-2 bg-[#004A74] text-white rounded-lg text-sm font-medium hover:bg-[#003d5e] transition flex items-center justify-center gap-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </button>
+
+                  </div>
                 </div>
               ))}
             </div>
+
           </div>
 
         </div>
