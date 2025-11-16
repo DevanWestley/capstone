@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import FixLayout from "../../components/FixLayout";
 
+// Star Rating Component
 const Stars = ({ rating = 0 }) => {
   const r = Math.max(0, Math.min(5, Number(rating || 0)));
   return (
@@ -11,11 +12,7 @@ const Stars = ({ rating = 0 }) => {
       {Array.from({ length: 5 }).map((_, i) => (
         <img
           key={i}
-          src={
-            i < Math.round(r)
-              ? "/assets/icons/star-filled.png"
-              : "/assets/icons/star-empty.png"
-          }
+          src={i < Math.round(r) ? "/assets/icons/star-filled.png" : "/assets/icons/star-empty.png"}
           alt="star"
           className="w-4 h-4"
         />
@@ -49,28 +46,24 @@ export default function ProyekSayaPage() {
   }, []);
 
   const filteredProjects = projects.filter((project) => {
-    const matchStatus =
-      filterStatus === "semua" || project.status === filterStatus;
-
+    const matchStatus = filterStatus === "semua" || project.status === filterStatus;
     const matchSearch =
       searchQuery === "" ||
       project.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       project.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       project.group?.toLowerCase().includes(searchQuery.toLowerCase());
-
     return matchStatus && matchSearch;
   });
 
   const getStatusColor = (status) => {
     switch (status) {
       case "Completed":
+      case "Approved":
         return "bg-green-100 text-green-700";
       case "In Progress":
         return "bg-blue-100 text-blue-700";
       case "Draft":
         return "bg-gray-100 text-gray-700";
-      case "Approved":
-        return "bg-green-100 text-green-700";
       case "Rejected":
         return "bg-red-100 text-red-700";
       default:
@@ -84,10 +77,7 @@ export default function ProyekSayaPage() {
         <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-            <span
-              className="hover:text-[#004A74] cursor-pointer"
-              onClick={() => router.push("/")}
-            >
+            <span className="hover:text-[#004A74] cursor-pointer" onClick={() => router.push("/")}>
               Homepage
             </span>
             <span>›</span>
@@ -112,9 +102,9 @@ export default function ProyekSayaPage() {
             </button>
           </div>
 
-          {/* Search & Filter Bar */}
+          {/* Search & Filter */}
           <div className="flex flex-col md:flex-row gap-4 mb-8 bg-white p-4 rounded-lg border border-gray-200">
-            {/* Search Input */}
+            {/* Search */}
             <div className="flex-1 flex items-center bg-[#5B585829] rounded-lg px-3 py-0.5">
               <div className="flex-1 relative">
                 <svg
@@ -123,12 +113,7 @@ export default function ProyekSayaPage() {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
                   type="text"
@@ -140,11 +125,9 @@ export default function ProyekSayaPage() {
               </div>
             </div>
 
-            {/* Filter Section */}
+            {/* Filter */}
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
-                Filter berdasarkan status
-              </span>
+              <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Filter berdasarkan status</span>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -165,7 +148,7 @@ export default function ProyekSayaPage() {
             Menampilkan {filteredProjects.length} proyek
           </div>
 
-          {/* Loading State */}
+          {/* Loading */}
           {loading && (
             <div className="text-center py-20">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#004A74]"></div>
@@ -173,13 +156,11 @@ export default function ProyekSayaPage() {
             </div>
           )}
 
-          {/* Empty State */}
+          {/* Empty */}
           {!loading && filteredProjects.length === 0 && (
             <div className="text-center py-20">
               <p className="text-gray-500 text-lg">Tidak ada proyek yang ditemukan.</p>
-              <p className="text-gray-400 text-sm mt-2">
-                Coba ubah kata kunci pencarian atau filter status
-              </p>
+              <p className="text-gray-400 text-sm mt-2">Coba ubah kata kunci pencarian atau filter status</p>
             </div>
           )}
 
@@ -224,9 +205,7 @@ export default function ProyekSayaPage() {
                     </div>
 
                     {/* Group & Year */}
-                    <p className="text-xs text-gray-500 mt-2">
-                      {project.group} • {project.year}
-                    </p>
+                    <p className="text-xs text-gray-500 mt-2">{project.group} • {project.year}</p>
 
                     {/* Description */}
                     <p className="text-sm text-[#332C2B] mt-3 leading-relaxed line-clamp-3">
