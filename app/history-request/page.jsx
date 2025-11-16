@@ -40,7 +40,7 @@ export default function Page() {
   const [error, setError] = useState(null);
 
   // filter & search
-  const [filter, setFilter] = useState("semua"); // normalized values
+  const [filter, setFilter] = useState("semua");
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -53,7 +53,6 @@ export default function Page() {
       })
       .then((data) => {
         if (!mounted) return;
-        // map the API project shape into the shape the UI expects
         const mapped = Array.isArray(data)
           ? data.map((p) => ({
               id: p.id,
@@ -97,16 +96,13 @@ export default function Page() {
   const dataToShow =
     Array.isArray(requests) && requests.length ? requests : fallback;
 
-  // apply filter + search (both case-insensitive)
   const filteredItems = dataToShow.filter((item) => {
     const s = String(item.status || "").toLowerCase();
 
-    // filter: if not 'semua', compare normalized
     if (filter && filter !== "semua") {
       if (s !== String(filter).toLowerCase()) return false;
     }
 
-    // search: check title, group, category
     if (query && query.trim()) {
       const q = query.trim().toLowerCase();
       const inTitle = (item.title || "").toLowerCase().includes(q);
@@ -130,7 +126,6 @@ export default function Page() {
 
   const openDetail = (id) => {
     recordViewedThread(id);
-    // redirect to your detail page. Update path if your detail route differs.
     router.push(`/detail/${id}`);
   };
 
@@ -161,42 +156,35 @@ export default function Page() {
 
   return (
     <FixLayout>
-      <div className="min-h-screen bg-gray-50 text-slate-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          {/* BREADCRUMB */}
-          <nav className="text-xs text-slate-500 mb-3">
-            <Link href="/" className="hover:underline">
+      <div className="min-h-screen bg-[#FCFCFC]">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+            <span
+              className="hover:text-[#004A74] cursor-pointer"
+              onClick={() => router.push("/")}
+            >
               Homepage
-            </Link>
-            <span className="mx-2">›</span>
-            <Link
-              href="/history-request"
-              className="font-semibold hover:underline"
-            >
+            </span>
+            <span>›</span>
+            <span className="text-[#004A74] font-semibold">
               History Request
-            </Link>
-            <button
-              onClick={() => router.back()}
-              className="ml-4 px-2 py-1 bg-gray-100 rounded text-xs"
-              title="Kembali ke halaman sebelumnya"
-            >
-              Back
-            </button>
-          </nav>
+            </span>
+          </div>
 
-          <div className="flex items-center justify-between mb-4">
+          {/* Header */}
+          <div className="mb-8">
             <div className="inline-block">
-              <h2 className="text-3xl font-bold text-[#004A74] relative">
+              <h1 className="text-3xl font-bold text-[#004A74]">
                 History Request
-              </h2>
+              </h1>
               <div className="h-1 bg-[#FED400] rounded mt-2"></div>
             </div>
           </div>
 
-          {/* Filter + Search box */}
           {/* Search & Filter Bar */}
           <div className="flex flex-col md:flex-row gap-4 mb-8 bg-white p-4 rounded-lg border border-gray-200">
-            {/* Search Box */}
+            {/* Search Input */}
             <div className="flex-1 flex items-center bg-[#5B585829] rounded-lg px-3 py-0.5">
               <div className="flex-1 relative">
                 <svg
@@ -212,14 +200,12 @@ export default function Page() {
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-
                 <input
                   type="text"
+                  placeholder="Cari berdasarkan kata kunci, judul, atau nama kelompok"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Cari berdasarkan kata kunci, judul, atau nama kelompok"
-                  className="w-full pl-10 pr-4 py-2 border-none bg-transparent 
-                   focus:outline-none text-sm text-gray-800 placeholder-gray-500"
+                  className="w-full pl-10 pr-4 py-2 border-none bg-transparent focus:outline-none text-sm text-gray-800 placeholder-gray-500"
                 />
               </div>
             </div>
@@ -229,126 +215,144 @@ export default function Page() {
               <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
                 Filter berdasarkan status
               </span>
-
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md 
-                 focus:outline-none focus:border-[#004A74] 
-                 focus:ring-1 focus:ring-[#004A74] 
-                 bg-white text-sm text-gray-800"
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#004A74] focus:ring-1 focus:ring-[#004A74] bg-white text-sm text-gray-800"
               >
-                <option value="semua">Semua</option>
+                <option value="semua">Semua Status</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
-                <option value="waiting for response">
-                  Waiting for Response
-                </option>
+                <option value="waiting for response">Waiting for Response</option>
               </select>
             </div>
           </div>
 
-          {loading && <p className="text-sm text-slate-500">Memuat data...</p>}
-          {error && <p className="text-sm text-red-600">Error: {error}</p>}
+          {/* Results Info */}
+          <div className="mb-4 text-sm text-gray-600">
+            Menampilkan {filteredItems.length} capstone
+          </div>
 
-          {!loading && filteredItems.length === 0 && (
-            <p className="text-sm text-slate-500 mb-6">
-              Tidak ada hasil yang cocok.
-            </p>
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-20">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#004A74]"></div>
+              <p className="text-gray-500 mt-4">Memuat data...</p>
+            </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-            {filteredItems.map((item) => {
-              const st = getStatusStyle(item.status);
-              const rating = Math.max(0, Math.min(5, Number(item.rating || 0)));
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-20">
+              <p className="text-red-600">Error: {error}</p>
+            </div>
+          )}
 
-              return (
-                <article
-                  key={item.id ?? Math.random()}
-                  className="bg-white rounded-[12px] overflow-hidden border border-gray-200 shadow hover:shadow-lg transition cursor-pointer flex flex-col"
-                  onClick={() => openDetail(item.id)}
-                >
-                  {/* Thumbnail */}
-                  <div className="p-4">
-                    <div className="relative h-36 overflow-hidden bg-gradient-to-br from-red-100 via-orange-50 to-pink-100 rounded-[12px]">
-                      <img
-                        src={item.thumbnail || PLACEHOLDER_THUMB}
-                        alt={item.title || "thumb"}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
+          {/* Empty State */}
+          {!loading && filteredItems.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-gray-500 text-lg">
+                Tidak ada capstone yang ditemukan.
+              </p>
+              <p className="text-gray-400 text-sm mt-2">
+                Coba ubah kata kunci pencarian atau filter status
+              </p>
+            </div>
+          )}
 
-                  {/* Content */}
-                  <div className="px-4 pb-5 flex flex-col h-full">
-                    {/* Kategori + Judul */}
-                    <p className="text-xs font-regular text-[#004A74] tracking-wide">
-                      {item.category || "-"}
-                    </p>
-                    <h3 className="text-base font-bold text-[#004A74] mt-2 leading-tight line-clamp-2">
-                      {item.title || "—"}
-                    </h3>
+          {/* Capstone Grid */}
+          {!loading && filteredItems.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+              {filteredItems.map((item) => {
+                const st = getStatusStyle(item.status);
+                const rating = Math.max(0, Math.min(5, Number(item.rating || 0)));
 
-                    {/* Rating */}
-                    <div className="mt-2">
-                      <Stars rating={rating} />
-                    </div>
-
-                    {/* Group name */}
-                    <p className="text-xs text-gray-500 mt-2">
-                      {item.group || "-"}
-                    </p>
-
-                    {/* Bawah: Lihat Detail Capstone + Status + Link */}
-                    <div className="flex items-center justify-between mt-auto">
-                      {/* Lihat Detail Capstone */}
-                      <div className="flex items-center gap-2 text-[#004A74] font-semibold group">
-                        <span className="text-sm relative">
-                          Lihat Detail Capstone
-                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FED400] transition-all duration-300 group-hover:w-full"></span>
-                        </span>
+                return (
+                  <article
+                    key={item.id ?? Math.random()}
+                    className="bg-white rounded-[12px] overflow-hidden border border-gray-200 shadow hover:shadow-lg transition cursor-pointer flex flex-col"
+                    onClick={() => openDetail(item.id)}
+                  >
+                    {/* Thumbnail */}
+                    <div className="p-4">
+                      <div className="relative h-36 overflow-hidden bg-gradient-to-br from-red-100 via-orange-50 to-pink-100 rounded-[12px]">
                         <img
-                          src="/assets/icons/arrow-right.png"
-                          alt="arrow"
-                          className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                          src={item.thumbnail || PLACEHOLDER_THUMB}
+                          alt={item.title || "thumb"}
+                          className="w-full h-full object-cover"
                         />
                       </div>
+                    </div>
 
-                      {/* Status + Link dokumen */}
-                      <div className="flex flex-col items-end gap-1">
-                        {/* Status pill */}
-                        <div
-                          className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium w-fit ${st.bg} ${st.color}`}
-                        >
+                    {/* Content */}
+                    <div className="px-4 pb-5 flex flex-col h-full">
+                      <p className="text-xs font-regular text-[#004A74] tracking-wide">
+                        {item.category || "-"}
+                      </p>
+                      <h3 className="text-base font-bold text-[#004A74] mt-2 leading-tight line-clamp-2">
+                        {item.title || "—"}
+                      </h3>
+
+                      {/* Rating */}
+                      <div className="mt-2">
+                        <Stars rating={rating} />
+                      </div>
+
+                      {/* Group name */}
+                      <p className="text-xs text-gray-500 mt-2">
+                        {item.group || "-"}
+                      </p>
+
+                      {/* Bottom section */}
+                      <div className="flex items-center justify-between mt-auto pt-4">
+                        {/* Lihat Detail Capstone */}
+                        <div className="flex items-center gap-2 text-[#004A74] font-semibold group">
+                          <span className="text-sm relative">
+                            Lihat Detail Capstone
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FED400] transition-all duration-300 group-hover:w-full"></span>
+                          </span>
                           <img
-                            src={st.icon}
-                            alt={item.status}
-                            className="w-4 h-4"
+                            src="/assets/icons/arrow-right.png"
+                            alt="arrow"
+                            className="w-4 h-4 group-hover:translate-x-1 transition-transform"
                           />
-                          <span>{item.status || "-"}</span>
                         </div>
 
-                        {/* Link dokumen (kalau approved dan ada driveLink) */}
-                        {String(item.status || "").toLowerCase() ===
-                          "approved" &&
-                          item.driveLink && (
-                            <a
-                              href={item.driveLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-amber-700 text-xs font-medium hover:underline whitespace-nowrap"
-                            >
-                              Lihat Dokumen Capstone →
-                            </a>
-                          )}
+                        {/* Status + Link dokumen */}
+                        <div className="flex flex-col items-end gap-1">
+                          {/* Status pill */}
+                          <div
+                            className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium w-fit ${st.bg} ${st.color}`}
+                          >
+                            <img
+                              src={st.icon}
+                              alt={item.status}
+                              className="w-4 h-4"
+                            />
+                            <span>{item.status || "-"}</span>
+                          </div>
+
+                          {/* Link dokumen */}
+                          {String(item.status || "").toLowerCase() === "approved" &&
+                            item.driveLink && (
+                              <a
+                                href={item.driveLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-amber-700 text-xs font-medium hover:underline whitespace-nowrap"
+                              >
+                                Lihat Dokumen Capstone →
+                              </a>
+                            )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </FixLayout>
