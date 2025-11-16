@@ -363,54 +363,92 @@ export default function RequestPage() {
               </form>
             </div>
 
-            {/* RIGHT: Project summary card */}
-            <aside className="md:col-span-1">
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm sticky top-8">
-                {loadingProject && (
-                  <p className="text-sm text-slate-500">Memuat project…</p>
-                )}
-                {projectError && (
-                  <p className="text-sm text-red-600">Error: {projectError}</p>
-                )}
+{/* RIGHT: Project summary card */}
+<aside className="md:col-span-1">
+  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm sticky top-8">
+    {loadingProject && (
+      <p className="text-sm text-slate-500 p-4">Memuat project…</p>
+    )}
+    {projectError && (
+      <p className="text-sm text-red-600 p-4">Error: {projectError}</p>
+    )}
 
-                {!loadingProject && project && (
-                  <>
-                    <div className="w-full h-36 rounded overflow-hidden mb-3 bg-gradient-to-br from-red-100 via-orange-50 to-pink-100">
-                      <img 
-                        src={project.thumbnail || PLACEHOLDER_THUMB} 
-                        alt={project.title} 
-                        className="w-full h-full object-cover" 
-                      />
-                    </div>
+    {!loadingProject && project && (
+      <>
+        {/* Thumbnail dengan padding */}
+        <div className="p-4">
+          <div className="relative h-36 overflow-hidden bg-gradient-to-br from-red-100 via-orange-50 to-pink-100 rounded-[12px]">
+            <img 
+              src={project.thumbnail || PLACEHOLDER_THUMB} 
+              alt={project.title} 
+              className="w-full h-full object-cover" 
+            />
+          </div>
+        </div>
 
-                    <p className="text-xs font-semibold text-[#004A74] uppercase tracking-wide">
-                      {project.category || "-"}
-                    </p>
-                    <h3 className="text-base font-bold text-[#004A74] mt-2 leading-tight">
-                      {project.title || "—"}
-                    </h3>
+        {/* Content */}
+        <div className="px-4 pb-5">
+          <p className="text-xs font-regular text-[#004A74] tracking-wide">
+            {project.category || "Tanpa Kategori"}
+          </p>
+          <h3 className="text-base font-bold text-[#004A74] mt-2 leading-tight line-clamp-2">
+            {project.title || "—"}
+          </h3>
 
-                    <div className="flex items-center gap-2 mt-3">
-                      <div className="text-xs text-gray-500">{project.group || "-"}</div>
-                    </div>
+          {/* Rating */}
+          <div className="mt-2 flex gap-1 items-center">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <img
+                key={i}
+                src={
+                  i < Math.round(project.rating || 0)
+                    ? "/assets/icons/star-filled.png"
+                    : "/assets/icons/star-empty.png"
+                }
+                alt="star"
+                className="w-4 h-4"
+              />
+            ))}
+          </div>
 
-                    <p className="text-sm text-slate-600 mt-3 line-clamp-3">
-                      {project.summary || "-"}
-                    </p>
+          {/* Group Name */}
+          <p className="text-xs text-gray-500 mt-2">
+            {project.group || "Kelompok"}
+          </p>
 
-                    <div className="mt-4 text-sm text-slate-500">
-                      <div>
-                        Tanggal: {project.date ? new Date(project.date).toLocaleDateString("id-ID") : "-"}
-                      </div>
-                    </div>
-                  </>
-                )}
+          {/* Description */}
+          <p className="text-sm text-[#332C2B] mt-3 leading-relaxed line-clamp-3">
+            {project.summary || "Tidak ada deskripsi."}
+          </p>
 
-                {!loadingProject && !project && !projectError && (
-                  <p className="text-sm text-slate-500">Project tidak ditemukan.</p>
-                )}
+          {/* Status Badge */}
+          <div className="mt-4">
+            {project.availableForContinuation ? (
+              <div className="flex items-center gap-1 text-green-600 text-xs">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium">Terbuka untuk dilanjutkan</span>
               </div>
-            </aside>
+            ) : (
+              <div className="flex items-center gap-1 text-red-600 text-xs">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium">Sudah dilanjutkan</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    )}
+
+    {!loadingProject && !project && !projectError && (
+      <p className="text-sm text-slate-500 p-4">Project tidak ditemukan.</p>
+    )}
+  </div>
+</aside>
+
           </div>
         </div>
       </div>
