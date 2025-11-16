@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function Header() {
-  const pathname = usePathname(); // cek halaman aktif
+  const pathname = usePathname();
+  const router = useRouter(); // ⬅ FIX: tambahkan router
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // cek login status dari localStorage
   useEffect(() => {
     const user = localStorage.getItem("user");
     setIsLoggedIn(!!user);
@@ -16,18 +19,20 @@ export default function Header() {
   const handleLogin = () => {
     localStorage.setItem("user", "true");
     setIsLoggedIn(true);
+    router.push("/login"); // opsional
   };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
     setIsLoggedIn(false);
+    router.push("/");
   };
 
   const menu = [
     { name: "Beranda", href: "/" },
-    { name: "Profil", href: "/profil" },
     { name: "Katalog", href: "/katalog" },
     { name: "Riwayat", href: "/history-request" },
+    { name: "Profil", href: "/profil/1" },
   ];
 
   return (
@@ -52,6 +57,8 @@ export default function Header() {
       {/* NAVBAR */}
       <nav className="w-full bg-[#0A3E66] text-white text-sm font-medium select-none">
         <ul className="max-w-7xl mx-auto flex items-center">
+
+          {/* MENU */}
           {menu.map((item) => {
             const active = pathname === item.href;
 
@@ -90,6 +97,7 @@ export default function Header() {
               LOGOUT
             </li>
           )}
+
         </ul>
       </nav>
     </header>
