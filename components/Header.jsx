@@ -6,37 +6,39 @@ import { useEffect, useState } from "react";
 
 export default function Header() {
   const pathname = usePathname();
-  const router = useRouter(); // ⬅ FIX: tambahkan router
+  const router = useRouter();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // cek login status dari localStorage
+  // Load login state on page load
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    setIsLoggedIn(!!user);
+    const saved = localStorage.getItem("isLoggedIn");
+    setIsLoggedIn(saved === "true");
   }, []);
 
   const handleLogin = () => {
-    localStorage.setItem("user", "true");
-    setIsLoggedIn(true);
-    router.push("/login"); // opsional
+    router.push("/login");
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
     setIsLoggedIn(false);
     router.push("/");
   };
 
+  // Menu items but "Profil" hidden when logged out
   const menu = [
     { name: "Beranda", href: "/" },
     { name: "Katalog", href: "/katalog" },
     { name: "Riwayat", href: "/history-request" },
-    { name: "Profil", href: "/profil/1" },
+    // only show this when logged in
+    ...(isLoggedIn ? [{ name: "Profil", href: "/profil/1" }] : []),
   ];
 
   return (
     <header className="w-full bg-[#08375E] text-white shadow-md border-b border-[#0f4c75]">
+      
+      {/* TOP HEADER */}
       <div className="max-w-7xl mx-auto flex items-center gap-4 py-4 px-6">
         <img
           src="/assets/images/ugm-logo.png"
@@ -58,21 +60,18 @@ export default function Header() {
       <nav className="w-full bg-[#0A3E66] text-white text-sm font-medium select-none">
         <ul className="max-w-7xl mx-auto flex items-center">
 
-          {/* MENU */}
+          {/* MENU ITEMS */}
           {menu.map((item) => {
             const active = pathname === item.href;
 
             return (
               <li
                 key={item.name}
-                className={`
-                  px-6 py-4 cursor-pointer border-r border-[#0f4c75]
-                  ${
-                    active
-                      ? "bg-[#FED400] text-black font-semibold"
-                      : "hover:text-[#FED400] hover:bg-[#0d4f82]"
-                  }
-                `}
+                className={`px-6 py-4 cursor-pointer border-r border-[#0f4c75] ${
+                  active
+                    ? "bg-[#FED400] text-black font-semibold"
+                    : "hover:text-[#FED400] hover:bg-[#0d4f82]"
+                }`}
               >
                 <Link href={item.href}>{item.name.toUpperCase()}</Link>
               </li>
@@ -81,7 +80,7 @@ export default function Header() {
 
           <li className="flex-1"></li>
 
-          {/* LOGIN / LOGOUT */}
+          {/* LOGIN / LOGOUT BUTTON */}
           {!isLoggedIn ? (
             <li
               onClick={handleLogin}
@@ -100,6 +99,7 @@ export default function Header() {
 
         </ul>
       </nav>
+
     </header>
   );
 }
