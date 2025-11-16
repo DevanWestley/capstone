@@ -205,6 +205,22 @@ export default function ProfileDetailPage() {
                       Edit
                     </button>
 
+                    {/* ❌ Hapus Anggota */}
+                    <button
+                      onClick={() => {
+                        if (confirm(`Hapus anggota ${m.name}?`)) {
+                          setMembers(prev => prev.filter(member => member.id !== m.id));
+                        }
+                      }}
+                      className="flex-1 md:flex-none px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition flex items-center justify-center gap-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                          d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Hapus
+                    </button>
+
                   </div>
                 </div>
               ))}
