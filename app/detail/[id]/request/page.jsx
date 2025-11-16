@@ -54,7 +54,13 @@ export default function RequestPage() {
       })
       .catch((err) => {
         if (!mounted) return;
+<<<<<<< HEAD
         setProjectError("Gagal mengambil detail project: " + (err.message || err));
+=======
+        setProjectError(
+          "Gagal mengambil detail project: " + (err.message || err)
+        );
+>>>>>>> df0f08d (Update header & footer.)
         setLoadingProject(false);
       });
 
@@ -69,7 +75,13 @@ export default function RequestPage() {
       return;
     }
     if (!ACCEPTED_TYPES.includes(f.type)) {
+<<<<<<< HEAD
       setFileError("Tipe file tidak didukung. Gunakan PDF atau Word (.pdf, .doc, .docx).");
+=======
+      setFileError(
+        "Tipe file tidak didukung. Gunakan PDF atau Word (.pdf, .doc, .docx)."
+      );
+>>>>>>> df0f08d (Update header & footer.)
       setFile(null);
       return;
     }
@@ -228,6 +240,7 @@ export default function RequestPage() {
             <div className="md:col-span-2">
               <form onSubmit={onSubmit} className="space-y-4">
                 <div>
+<<<<<<< HEAD
                   <label className="block text-xs font-semibold mb-2">Project</label>
                   <div className="flex items-center gap-3 p-3 border rounded bg-gray-50">
                     <div className="w-16 h-12 rounded overflow-hidden bg-slate-100">
@@ -235,6 +248,17 @@ export default function RequestPage() {
                         src={project?.thumbnail || PLACEHOLDER_THUMB} 
                         alt={project?.title || "thumb"} 
                         className="w-full h-full object-cover" 
+=======
+                  <label className="block text-xs font-semibold mb-2">
+                    Project
+                  </label>
+                  <div className="flex items-center gap-3 p-3 border rounded bg-gray-50">
+                    <div className="w-16 h-12 rounded overflow-hidden bg-slate-100">
+                      <img
+                        src={project?.thumbnail || PLACEHOLDER_THUMB}
+                        alt={project?.title || "thumb"}
+                        className="w-full h-full object-cover"
+>>>>>>> df0f08d (Update header & footer.)
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -249,7 +273,13 @@ export default function RequestPage() {
                 </div>
 
                 <div>
+<<<<<<< HEAD
                   <label className="block text-xs font-semibold mb-2">Subject</label>
+=======
+                  <label className="block text-xs font-semibold mb-2">
+                    Subject
+                  </label>
+>>>>>>> df0f08d (Update header & footer.)
                   <input
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
@@ -280,18 +310,37 @@ export default function RequestPage() {
                     onDrop={onDrop}
                     onDragOver={onDragOver}
                     className={`w-full min-h-[120px] flex items-center justify-center border-2 rounded-lg p-4 text-center cursor-pointer transition
+<<<<<<< HEAD
                       ${file ? "border-dashed border-slate-300 bg-white" : "border-dashed border-slate-200 bg-gray-50 hover:bg-gray-100"}
+=======
+                      ${
+                        file
+                          ? "border-dashed border-slate-300 bg-white"
+                          : "border-dashed border-slate-200 bg-gray-50 hover:bg-gray-100"
+                      }
+>>>>>>> df0f08d (Update header & footer.)
                     `}
                     onClick={() => fileInputRef.current?.click()}
                     role="button"
                     tabIndex={0}
+<<<<<<< HEAD
                     onKeyDown={(e) => { if (e.key === "Enter") fileInputRef.current?.click(); }}
+=======
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") fileInputRef.current?.click();
+                    }}
+>>>>>>> df0f08d (Update header & footer.)
                   >
                     <div className="w-full">
                       {!file && (
                         <>
                           <div className="text-sm text-slate-500 mb-2">
+<<<<<<< HEAD
                             Tarik & lepas file di sini, atau klik untuk pilih file
+=======
+                            Tarik & lepas file di sini, atau klik untuk pilih
+                            file
+>>>>>>> df0f08d (Update header & footer.)
                           </div>
                           <div className="text-xs text-slate-400">
                             Dukungan: .pdf, .doc, .docx — max 5MB
@@ -302,6 +351,7 @@ export default function RequestPage() {
                       {file && (
                         <div className="flex items-center gap-3">
                           <div className="flex-1 text-left min-w-0">
+<<<<<<< HEAD
                             <div className="font-medium truncate">{file.name}</div>
                             <div className="text-xs text-slate-500">
                               {Math.round(file.size / 1024)} KB • {file.type || "n/a"}
@@ -313,6 +363,22 @@ export default function RequestPage() {
                               e.stopPropagation(); 
                               removeFile(); 
                             }} 
+=======
+                            <div className="font-medium truncate">
+                              {file.name}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {Math.round(file.size / 1024)} KB •{" "}
+                              {file.type || "n/a"}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFile();
+                            }}
+>>>>>>> df0f08d (Update header & footer.)
                             className="px-3 py-1 border rounded text-sm hover:bg-gray-50 transition"
                           >
                             Hapus
@@ -363,6 +429,7 @@ export default function RequestPage() {
               </form>
             </div>
 
+<<<<<<< HEAD
 {/* RIGHT: Project summary card */}
 <aside className="md:col-span-1">
   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm sticky top-8">
@@ -449,9 +516,124 @@ export default function RequestPage() {
   </div>
 </aside>
 
+=======
+            {/* RIGHT: Project summary card */}
+            <aside className="md:col-span-1">
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm sticky top-8">
+                {loadingProject && (
+                  <p className="text-sm text-slate-500 p-4">Memuat project…</p>
+                )}
+                {projectError && (
+                  <p className="text-sm text-red-600 p-4">
+                    Error: {projectError}
+                  </p>
+                )}
+
+                {!loadingProject && project && (
+                  <>
+                    {/* Thumbnail dengan padding */}
+                    <div className="p-4">
+                      <div className="relative h-36 overflow-hidden bg-gradient-to-br from-red-100 via-orange-50 to-pink-100 rounded-[12px]">
+                        <img
+                          src={project.thumbnail || PLACEHOLDER_THUMB}
+                          alt={project.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="px-4 pb-5">
+                      <p className="text-xs font-regular text-[#004A74] tracking-wide">
+                        {project.category || "Tanpa Kategori"}
+                      </p>
+                      <h3 className="text-base font-bold text-[#004A74] mt-2 leading-tight line-clamp-2">
+                        {project.title || "—"}
+                      </h3>
+
+                      {/* Rating */}
+                      <div className="mt-2 flex gap-1 items-center">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <img
+                            key={i}
+                            src={
+                              i < Math.round(project.rating || 0)
+                                ? "/assets/icons/star-filled.png"
+                                : "/assets/icons/star-empty.png"
+                            }
+                            alt="star"
+                            className="w-4 h-4"
+                          />
+                        ))}
+                      </div>
+
+                      {/* Group Name */}
+                      <p className="text-xs text-gray-500 mt-2">
+                        {project.group || "Kelompok"}
+                      </p>
+
+                      {/* Description */}
+                      <p className="text-sm text-[#332C2B] mt-3 leading-relaxed line-clamp-3">
+                        {project.summary || "Tidak ada deskripsi."}
+                      </p>
+
+                      {/* Status Badge */}
+                      <div className="mt-4">
+                        {project.availableForContinuation ? (
+                          <div className="flex items-center gap-1 text-green-600 text-xs">
+                            <svg
+                              className="w-4 h-4"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span className="font-medium">
+                              Terbuka untuk dilanjutkan
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-red-600 text-xs">
+                            <svg
+                              className="w-4 h-4"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span className="font-medium">
+                              Sudah dilanjutkan
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {!loadingProject && !project && !projectError && (
+                  <p className="text-sm text-slate-500 p-4">
+                    Project tidak ditemukan.
+                  </p>
+                )}
+              </div>
+            </aside>
+>>>>>>> df0f08d (Update header & footer.)
           </div>
         </div>
       </div>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> df0f08d (Update header & footer.)
