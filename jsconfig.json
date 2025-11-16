@@ -1,7 +1,18 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "paths": {
       "@/*": ["./*"]
+=======
+<<<<<<< HEAD
+    "paths": {
+      "@/*": ["./*"]
+=======
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["*"]
+>>>>>>> df0f08d (Update header & footer.)
+>>>>>>> c89257efbe4db11f7d6a3da31309e56ba9288e1f
     }
   }
 }

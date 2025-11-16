@@ -1,6 +1,14 @@
 'use client';
 
+<<<<<<< HEAD
 export default function LoginPage() {
+=======
+import { useRouter } from 'next/navigation';
+
+export default function LoginPage() {
+  const router = useRouter();
+
+>>>>>>> c89257efbe4db11f7d6a3da31309e56ba9288e1f
   function showToast(message, kind = 'info') {
     const id = 'capstone-toast';
     let el = document.getElementById(id);
@@ -33,6 +41,7 @@ export default function LoginPage() {
       showToast('Password diperlukan', 'destructive');
       return;
     }
+<<<<<<< HEAD
     if (!email.includes('@')) email = `${email}@ugm.ac.id`;
 
     try {
@@ -51,12 +60,35 @@ export default function LoginPage() {
       console.error(err);
       showToast(err.message || 'Terjadi kesalahan', 'destructive');
     }
+=======
+
+    // Tambahkan @ugm.ac.id jika user hanya input "devanw"
+    if (!email.includes('@')) email = `${email}@ugm.ac.id`;
+
+    // === DUMMY LOGIN (tanpa API) ===
+    const validUser = "devanw@ugm.ac.id";
+    const validPass = "12345678";
+
+    if (email === validUser && password === validPass) {
+      localStorage.setItem("isLoggedIn", "true");
+      showToast("Login Successful — Welcome back!");
+      router.push("/");
+      return;
+    }
+
+    // Jika salah
+    showToast("Username atau password salah", "destructive");
+>>>>>>> c89257efbe4db11f7d6a3da31309e56ba9288e1f
   }
 
   return (
     <div className="min-h-screen relative flex">
 
+<<<<<<< HEAD
       {/* === GLOBAL BACKGROUND FOR BOTH SIDES === */}
+=======
+      {/* === GLOBAL BACKGROUND === */}
+>>>>>>> c89257efbe4db11f7d6a3da31309e56ba9288e1f
       <img
         src="https://simaster.ugm.ac.id/ugmfw-assets-metronics8/media/ugm/bg-1200.jpg"
         className="absolute inset-0 w-full h-full object-cover"
@@ -67,7 +99,11 @@ export default function LoginPage() {
       {/* MAIN CONTENT */}
       <div className="relative flex w-full">
 
+<<<<<<< HEAD
         {/* LEFT HERO SECTION */}
+=======
+        {/* LEFT HERO */}
+>>>>>>> c89257efbe4db11f7d6a3da31309e56ba9288e1f
         <aside className="hidden lg:flex w-1/2 relative items-center justify-center text-white">
           <div className="relative z-10 max-w-lg text-center px-8">
             <div className="flex items-center justify-center gap-4 mb-6">
@@ -106,7 +142,11 @@ export default function LoginPage() {
           </div>
         </aside>
 
+<<<<<<< HEAD
         {/* RIGHT SIGN-IN FORM */}
+=======
+        {/* RIGHT LOGIN FORM */}
+>>>>>>> c89257efbe4db11f7d6a3da31309e56ba9288e1f
         <main className="flex-1 relative flex items-center justify-center p-6">
           <div
             className="relative z-20 w-full max-w-[560px] bg-white rounded-2xl shadow-2xl p-8 pb-36"
@@ -142,7 +182,11 @@ export default function LoginPage() {
                   <input
                     name="password"
                     type="password"
+<<<<<<< HEAD
                     defaultValue="password"
+=======
+                    defaultValue="12345678"
+>>>>>>> c89257efbe4db11f7d6a3da31309e56ba9288e1f
                     className="w-full rounded-md border px-3 py-2"
                     placeholder="••••••••"
                   />
