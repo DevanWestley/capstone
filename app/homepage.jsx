@@ -109,7 +109,9 @@ export default function HomePage() {
                 untuk mendukung kesinambungan proyek capstone di lingkungan
                 DTETI FT UGM.
               </p>
-              <button className="mt-5 px-5 py-2 bg-white text-[#004A74] font-semibold rounded shadow hover:bg-gray-100 transition">
+              <button 
+              onClick={() => router.push("/login")}
+              className="mt-5 px-5 py-2 bg-white text-[#004A74] font-semibold rounded shadow hover:bg-gray-100 transition">
                 Gabung Sekarang
               </button>
             </div>

@@ -373,7 +373,10 @@ export default function DetailPage() {
 
             {/* Request Button */}
             {project.availableForContinuation && (
-              <button className="w-full py-3 bg-[#004A74] text-white font-semibold rounded-lg hover:bg-[#003d5e] transition shadow-lg">
+              <button 
+                onClick={() => router.push(`/detail/${project.id}/request`)}
+                className="w-full py-3 bg-[#004A74] text-white font-semibold rounded-lg hover:bg-[#003d5e] transition shadow-lg"
+              >
                 Kirim Request
               </button>
             )}

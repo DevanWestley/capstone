@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 
 const PLACEHOLDER_THUMB = "/assets/thumb-placeholder.png";
@@ -24,7 +23,7 @@ export default function RequestPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
-  const [file, setFile] = useState(null); // File object
+  const [file, setFile] = useState(null);
   const [fileError, setFileError] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -103,7 +102,7 @@ export default function RequestPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // read file to base64 (without prefix)
+  // read file to base64
   const readFileAsBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -147,7 +146,7 @@ export default function RequestPage() {
       const payload = {
         projectId: project.id,
         projectTitle: project.title,
-        subject: subject.trim(), // field name requested
+        subject: subject.trim(),
         message: message.trim(),
         proposalFile: proposalFilePayload,
       };
@@ -164,7 +163,6 @@ export default function RequestPage() {
       }
 
       setSuccess(true);
-      // clear form lightly
       setSubject("");
       setMessage("");
       removeFile();
@@ -180,29 +178,51 @@ export default function RequestPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-slate-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        <nav className="text-xs text-slate-500 mb-3 flex items-center gap-2">
-          <Link href="/" className="hover:underline">Homepage</Link>
+    <div className="min-h-screen bg-[#FCFCFC]">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+          <span
+            className="hover:text-[#004A74] cursor-pointer"
+            onClick={() => router.push("/")}
+          >
+            Homepage
+          </span>
           <span>›</span>
-          <Link href="/projects" className="hover:underline">Projects</Link>
+          <span
+            className="hover:text-[#004A74] cursor-pointer"
+            onClick={() => router.push("/katalog")}
+          >
+            Katalog
+          </span>
           <span>›</span>
-          <span className="font-semibold">Request Lanjutkan</span>
-        </nav>
+          <span
+            className="hover:text-[#004A74] cursor-pointer"
+            onClick={() => router.push(`/detail/${id}`)}
+          >
+            {project?.title || "Detail Capstone"}
+          </span>
+          <span>›</span>
+          <span className="text-[#004A74] font-semibold">
+            Request Lanjutkan
+          </span>
+        </div>
 
-        <div className="flex items-center justify-between mb-4">
+        {/* Header */}
+        <div className="mb-8">
           <div className="inline-block">
-            <h2 className="text-3xl font-bold text-[#004A74] relative">
+            <h1 className="text-3xl font-bold text-[#004A74]">
               Request Lanjutkan
-            </h2>
+            </h1>
             <div className="h-1 bg-[#FED400] rounded mt-2"></div>
           </div>
-        </div>
-        <div className="flex items-center justify-between mb-4">
-            <div className="text-sm text-slate-500">Isi form untuk meminta melanjutkan project</div>
+          <p className="text-sm text-gray-600 mt-4">
+            Isi form untuk meminta melanjutkan project
+          </p>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+        {/* Main Content */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* LEFT: Form */}
             <div className="md:col-span-2">
@@ -211,11 +231,19 @@ export default function RequestPage() {
                   <label className="block text-xs font-semibold mb-2">Project</label>
                   <div className="flex items-center gap-3 p-3 border rounded bg-gray-50">
                     <div className="w-16 h-12 rounded overflow-hidden bg-slate-100">
-                      <img src={project?.thumbnail || PLACEHOLDER_THUMB} alt={project?.title || "thumb"} className="w-full h-full object-cover" />
+                      <img 
+                        src={project?.thumbnail || PLACEHOLDER_THUMB} 
+                        alt={project?.title || "thumb"} 
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-slate-800 truncate">{project?.title || "-"}</div>
-                      <div className="text-xs text-slate-500 truncate">{project?.category || "-"}</div>
+                      <div className="text-sm font-semibold text-slate-800 truncate">
+                        {project?.title || "-"}
+                      </div>
+                      <div className="text-xs text-slate-500 truncate">
+                        {project?.category || "-"}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -225,41 +253,49 @@ export default function RequestPage() {
                   <input
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="w-full p-3 border rounded-lg bg-white text-sm"
+                    className="w-full p-3 border rounded-lg bg-white text-sm focus:outline-none focus:border-[#004A74] focus:ring-1 focus:ring-[#004A74]"
                     placeholder="Ringkasan singkat permintaan (subject)"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold mb-2">Pesan / Rencana Lanjutan</label>
+                  <label className="block text-xs font-semibold mb-2">
+                    Pesan / Rencana Lanjutan
+                  </label>
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    className="w-full p-3 border rounded-lg bg-white text-sm min-h-[120px]"
+                    className="w-full p-3 border rounded-lg bg-white text-sm min-h-[120px] focus:outline-none focus:border-[#004A74] focus:ring-1 focus:ring-[#004A74] resize-none"
                     placeholder="Jelaskan singkat rencana atau alasan Anda ingin melanjutkan project ini"
                   />
                 </div>
 
                 {/* Upload box */}
                 <div>
-                  <label className="block text-xs font-semibold mb-2">Upload Proposal (opsional)</label>
+                  <label className="block text-xs font-semibold mb-2">
+                    Upload Proposal (opsional)
+                  </label>
 
                   <div
                     onDrop={onDrop}
                     onDragOver={onDragOver}
-                    className={`w-full min-h-[120px] flex items-center justify-center border-2 rounded-lg p-4 text-center cursor-pointer
-                      ${file ? "border-dashed border-slate-300 bg-white" : "border-dashed border-slate-200 bg-gray-50"}
+                    className={`w-full min-h-[120px] flex items-center justify-center border-2 rounded-lg p-4 text-center cursor-pointer transition
+                      ${file ? "border-dashed border-slate-300 bg-white" : "border-dashed border-slate-200 bg-gray-50 hover:bg-gray-100"}
                     `}
                     onClick={() => fileInputRef.current?.click()}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => { if (e.key === "Enter") fileInputRef.current?.click(); }}
                   >
-                    <div>
+                    <div className="w-full">
                       {!file && (
                         <>
-                          <div className="text-sm text-slate-500 mb-2">Tarik & lepas file di sini, atau klik untuk pilih file</div>
-                          <div className="text-xs text-slate-400">Dukungan: .pdf, .doc, .docx — max 5MB</div>
+                          <div className="text-sm text-slate-500 mb-2">
+                            Tarik & lepas file di sini, atau klik untuk pilih file
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            Dukungan: .pdf, .doc, .docx — max 5MB
+                          </div>
                         </>
                       )}
 
@@ -267,11 +303,20 @@ export default function RequestPage() {
                         <div className="flex items-center gap-3">
                           <div className="flex-1 text-left min-w-0">
                             <div className="font-medium truncate">{file.name}</div>
-                            <div className="text-xs text-slate-500">{Math.round(file.size / 1024)} KB • {file.type || "n/a"}</div>
+                            <div className="text-xs text-slate-500">
+                              {Math.round(file.size / 1024)} KB • {file.type || "n/a"}
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button type="button" onClick={(e) => { e.stopPropagation(); removeFile(); }} className="px-3 py-1 border rounded text-sm">Hapus</button>
-                          </div>
+                          <button 
+                            type="button" 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              removeFile(); 
+                            }} 
+                            className="px-3 py-1 border rounded text-sm hover:bg-gray-50 transition"
+                          >
+                            Hapus
+                          </button>
                         </div>
                       )}
 
@@ -283,20 +328,34 @@ export default function RequestPage() {
                         className="hidden"
                       />
 
-                      {fileError && <p className="text-xs text-red-600 mt-2">{fileError}</p>}
+                      {fileError && (
+                        <p className="text-xs text-red-600 mt-2">{fileError}</p>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {submitError && <p className="text-sm text-red-600">{submitError}</p>}
-                {success && <p className="text-sm text-green-600">Request berhasil dikirim. Mengalihkan ke History…</p>}
+                {submitError && (
+                  <p className="text-sm text-red-600">{submitError}</p>
+                )}
+                {success && (
+                  <p className="text-sm text-green-600">
+                    Request berhasil dikirim. Mengalihkan ke History…
+                  </p>
+                )}
 
-                <div className="flex items-center justify-end gap-3">
-                  <Link href={`/project/${id}`} className="px-4 py-2 border rounded text-sm">Kembali</Link>
+                <div className="flex items-center justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/detail/${id}`)}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
+                  >
+                    Kembali
+                  </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-4 py-2 bg-[#004A74] text-white rounded text-sm disabled:opacity-70"
+                    className="px-6 py-2 bg-[#004A74] text-white font-semibold rounded-lg hover:bg-[#003d5e] transition disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     {submitting ? "Mengirim..." : "Kirim Request"}
                   </button>
@@ -306,27 +365,43 @@ export default function RequestPage() {
 
             {/* RIGHT: Project summary card */}
             <aside className="md:col-span-1">
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                {loadingProject && <p className="text-sm text-slate-500">Memuat project…</p>}
-                {projectError && <p className="text-sm text-red-600">Error: {projectError}</p>}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm sticky top-8">
+                {loadingProject && (
+                  <p className="text-sm text-slate-500">Memuat project…</p>
+                )}
+                {projectError && (
+                  <p className="text-sm text-red-600">Error: {projectError}</p>
+                )}
 
                 {!loadingProject && project && (
                   <>
                     <div className="w-full h-36 rounded overflow-hidden mb-3 bg-gradient-to-br from-red-100 via-orange-50 to-pink-100">
-                      <img src={project.thumbnail || PLACEHOLDER_THUMB} alt={project.title} className="w-full h-full object-cover" />
+                      <img 
+                        src={project.thumbnail || PLACEHOLDER_THUMB} 
+                        alt={project.title} 
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
 
-                    <p className="text-xs font-semibold text-[#004A74] uppercase tracking-wide">{project.category || "-"}</p>
-                    <h3 className="text-base font-bold text-blue-900 mt-2 leading-tight">{project.title || "—"}</h3>
+                    <p className="text-xs font-semibold text-[#004A74] uppercase tracking-wide">
+                      {project.category || "-"}
+                    </p>
+                    <h3 className="text-base font-bold text-[#004A74] mt-2 leading-tight">
+                      {project.title || "—"}
+                    </h3>
 
                     <div className="flex items-center gap-2 mt-3">
                       <div className="text-xs text-gray-500">{project.group || "-"}</div>
                     </div>
 
-                    <p className="text-sm text-slate-600 mt-3">{project.summary || "-"}</p>
+                    <p className="text-sm text-slate-600 mt-3 line-clamp-3">
+                      {project.summary || "-"}
+                    </p>
 
                     <div className="mt-4 text-sm text-slate-500">
-                      <div>Tanggal: {project.date ? new Date(project.date).toLocaleDateString() : "-"}</div>
+                      <div>
+                        Tanggal: {project.date ? new Date(project.date).toLocaleDateString("id-ID") : "-"}
+                      </div>
                     </div>
                   </>
                 )}
