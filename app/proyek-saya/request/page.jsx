@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
 // use mock helpers directly
-import { getIncomingRequests, updateIncomingRequestStatus } from "../../../lib/mock-data";
+import { getIncomingRequests, updateIncomingRequestStatus, getMyProjectById } from "../../../lib/mock-data";
 
 const ICONS = {
   approved: "/assets/icons/v.svg",
@@ -20,6 +20,7 @@ export default function RequestMasukPage() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("semua");
+  const [projectTitle, setProjectTitle] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -31,6 +32,20 @@ export default function RequestMasukPage() {
       setRequests([]);
     } finally {
       setLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) {
+      setProjectTitle(null);
+      return;
+    }
+    try {
+      const p = getMyProjectById(projectId);
+      setProjectTitle(p ? p.title : null);
+    } catch (err) {
+      console.error("Failed to load project title:", err);
+      setProjectTitle(null);
     }
   }, [projectId]);
 
@@ -88,6 +103,17 @@ export default function RequestMasukPage() {
             >
               Proyek Saya
             </span>
+            {projectTitle && (
+              <>
+                <span>›</span>
+                <span
+                  className="hover:text-[#004A74] cursor-pointer"
+                  onClick={() => router.push(`/proyek-saya/detail?id=${projectId}`)}
+                >
+                  {projectTitle}
+                </span>
+              </>
+            )}
             <span>›</span>
             <span className="text-[#004A74] font-semibold">Request Masuk</span>
           </div>
