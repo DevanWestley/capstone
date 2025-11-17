@@ -48,7 +48,7 @@ export default function Header() {
           alt="Logo UGM"
           className="h-14 w-auto"
         />
-        <div>
+        <div className="gama-serif">
           <h1 className="text-lg font-semibold leading-tight tracking-wide">
             CAPSTONE CONNECTOR
           </h1>
