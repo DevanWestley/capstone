@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import FixLayout from "../../components/FixLayout";
+// ✅ NEW: ambil data dari mock my projects
+import { getMyProjects } from "../../lib/mock-data";
 
 // Star Rating Component
 const Stars = ({ rating = 0 }) => {
@@ -30,19 +32,15 @@ export default function ProyekSayaPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/my-projects")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setProjects(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching projects:", err);
-        setLoading(false);
-      });
+    try {
+      // Ambil langsung dari mock-data (MOCK_MY_PROJECTS)
+      const data = getMyProjects();
+      setProjects(data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading mock my projects:", err);
+      setLoading(false);
+    }
   }, []);
 
   const filteredProjects = projects.filter((project) => {
@@ -58,14 +56,11 @@ export default function ProyekSayaPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "Completed":
-      case "Approved":
         return "bg-green-100 text-green-700";
       case "In Progress":
         return "bg-blue-100 text-blue-700";
       case "Draft":
         return "bg-gray-100 text-gray-700";
-      case "Rejected":
-        return "bg-red-100 text-red-700";
       default:
         return "bg-gray-100 text-gray-600";
     }
@@ -137,8 +132,6 @@ export default function ProyekSayaPage() {
                 <option value="Draft">Draft</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
               </select>
             </div>
           </div>
@@ -224,6 +217,19 @@ export default function ProyekSayaPage() {
                           alt="arrow"
                           className="w-4 h-4 group-hover:translate-x-1 transition-transform"
                         />
+                      </div>
+
+                      {/* Request button - stopPropagation so card click doesn't fire */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/proyek-saya/request?projectId=${project.id}`);
+                          }}
+                          className="text-xs px-4 py-2 bg-[#004A74] text-white rounded-lg shadow hover:bg-[#003d5e] transition"
+                        >
+                          Lihat Request
+                        </button>
                       </div>
                     </div>
                   </div>

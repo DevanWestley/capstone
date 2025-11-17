@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
+// use mock helpers directly
+import { getIncomingRequests, updateIncomingRequestStatus } from "../../../lib/mock-data";
 
 const ICONS = {
   approved: "/assets/icons/v.svg",
@@ -21,24 +23,37 @@ export default function RequestMasukPage() {
 
   useEffect(() => {
     setLoading(true);
-    const url = projectId 
-      ? `/api/my-projects/incoming-requests?projectId=${projectId}`
-      : "/api/my-projects/incoming-requests";
-
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setRequests(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching requests:", err);
-        setLoading(false);
-      });
+    try {
+      const data = getIncomingRequests(projectId || null);
+      setRequests(data || []);
+    } catch (err) {
+      console.error("Error loading incoming requests:", err);
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
   }, [projectId]);
+
+  const handleApprove = (id) => {
+    try {
+      const updated = updateIncomingRequestStatus(id, "Approved");
+      setRequests((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    } catch (err) {
+      console.error("Failed to approve request", err);
+      alert("Gagal menyetujui request: " + (err.message || err));
+    }
+  };
+
+  const handleReject = (id) => {
+    const reason = window.prompt("Alasan penolakan (opsional):", "");
+    try {
+      const updated = updateIncomingRequestStatus(id, "Rejected", reason || null);
+      setRequests((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    } catch (err) {
+      console.error("Failed to reject request", err);
+      alert("Gagal menolak request: " + (err.message || err));
+    }
+  };
 
   const filteredRequests = requests.filter((req) => {
     if (filterStatus === "semua") return true;
@@ -176,7 +191,7 @@ export default function RequestMasukPage() {
                         className="px-4 py-2 bg-[#004A74] text-white rounded-lg hover:bg-[#003d5e] transition text-sm font-semibold whitespace-nowrap"
                       >
                         Lihat Detail
-                      </button>
+                      </button>                      
                     </div>
                   </div>
                 );

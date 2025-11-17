@@ -33,7 +33,7 @@ export default function Header() {
     { name: "Riwayat", href: "/history-request" },
     // only show these when logged in
     ...(isLoggedIn ? [
-      { name: "Projek", href: "/proyek-saya" },
+      { name: "Proyek", href: "/proyek-saya" },
       { name: "Profil", href: "/profil/1" }
     ] : []),
   ];
