@@ -42,7 +42,7 @@ export default function Header() {
     <header className="w-full bg-[#08375E] text-white shadow-md border-b border-[#0f4c75]">
       
       {/* TOP HEADER */}
-      <div className="max-w-7xl mx-auto flex items-center gap-4 py-4 px-6">
+      <div className="max-w-7xl mx-auto flex items-center gap-4 py-7 px-6">
         <img
           src="/assets/images/ugm-logo.png"
           alt="Logo UGM"
