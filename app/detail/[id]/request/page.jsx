@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
+import FixLayout from "../../../../components/FixLayout";
 
 const PLACEHOLDER_THUMB = "/assets/thumb-placeholder.png";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -182,7 +183,7 @@ export default function RequestPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FCFCFC]">
+    <FixLayout>
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
@@ -493,6 +494,6 @@ export default function RequestPage() {
           </div>
         </div>
       </div>
-    </div>
+    </FixLayout>
   );
 }
