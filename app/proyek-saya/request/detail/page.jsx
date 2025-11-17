@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
-import { getIncomingRequestById, updateIncomingRequestStatus } from "../../../../lib/mock-data";
+import { getIncomingRequestById, updateIncomingRequestStatus, getMyProjectById } from "../../../../lib/mock-data";
 
 function formatDate(iso) {
     if (!iso) return "-";
@@ -64,6 +64,7 @@ export default function RequestDetailPage() {
 
     const [req, setReq] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [projectOwnerGroup, setProjectOwnerGroup] = useState(null);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectReason, setRejectReason] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -78,6 +79,13 @@ export default function RequestDetailPage() {
             }
             const r = getIncomingRequestById(id);
             setReq(r);
+            try {
+                const proj = r?.projectId ? getMyProjectById(r.projectId) : null;
+                setProjectOwnerGroup(proj?.group || null);
+            } catch (err) {
+                console.error("Failed to load project owner group:", err);
+                setProjectOwnerGroup(null);
+            }
         } catch (err) {
             console.error("Failed to load incoming request:", err);
             setReq(null);
@@ -160,6 +168,17 @@ export default function RequestDetailPage() {
                     <span className="hover:text-[#004A74] cursor-pointer" onClick={() => router.push('/')}>Homepage</span>
                     <span>›</span>
                     <span className="hover:text-[#004A74] cursor-pointer" onClick={() => router.push('/proyek-saya')}>Proyek Saya</span>
+                    {req?.projectTitle && (
+                        <>
+                            <span>›</span>
+                            <span
+                                className="hover:text-[#004A74] cursor-pointer"
+                                onClick={() => router.push(`/proyek-saya/detail?id=${req.projectId}`)}
+                            >
+                                {req.projectTitle}
+                            </span>
+                        </>
+                    )}
                     <span>›</span>
                     <span className="hover:text-[#004A74] cursor-pointer" onClick={() => router.push('/proyek-saya/request')}>Request Masuk</span>
                     <span>›</span>
@@ -173,7 +192,7 @@ export default function RequestDetailPage() {
                     </div>
 
                     <div className="flex-1">
-                        <h1 className="text-3xl lg:text-4xl font-bold text-[#004A74] leading-tight">{req.requesterName}</h1>
+                        <h1 className="text-3xl lg:text-4xl font-bold text-[#004A74] leading-tight">{projectOwnerGroup || req.requesterName}</h1>
                         <p className="mt-2 text-base text-[#5B5858]">Angkatan {new Date(req.createdAt).getFullYear()}</p>
                         <div className="mt-5">
                             <div className="flex items-center gap-4">
