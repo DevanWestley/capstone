@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
+import { getMyProjectById } from "../../../lib/mock-data";
 
 export default function DetailProyekPage() {
   const router = useRouter();
@@ -20,19 +21,15 @@ export default function DetailProyekPage() {
     }
 
     setLoading(true);
-    fetch(`/api/my-projects/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setProject(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching project:", err);
-        setLoading(false);
-      });
+    try {
+      const data = getMyProjectById(id);
+      setProject(data || null);
+    } catch (err) {
+      console.error("Error loading project from mock:", err);
+      setProject(null);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
   const getStatusColor = (status) => {
@@ -244,7 +241,7 @@ export default function DetailProyekPage() {
                   {project.members && project.members.length > 0 ? (
                     project.members.map((member) => (
                       <div key={member.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center shrink-0">
                           <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                           </svg>
