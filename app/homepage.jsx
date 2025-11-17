@@ -7,22 +7,22 @@ import FixLayout from "../components/FixLayout.jsx";
 const features = [
   {
     title: "Jelajahi Showcase Capstone",
-    desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris fermentum elit est, eu posuere tellus ornare in. Fusce feugiat ligula eu orci fringilla imperdiet.",
+    desc: "Akses showcase proyek yang telah terdokumentasi lengkap dengan ringkasan, galeri, dan hasil evaluasi. Gunakan filter dan pencarian untuk menemukan solusi sesuai topik atau teknologi yang Anda butuhkan.",
     icon: "showcase-icon",
   },
   {
     title: "Lanjutkan Capstone Sebelumnya",
-    desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris fermentum elit est, eu posuere tellus ornare in. Fusce feugiat ligula eu orci fringilla imperdiet.",
+    desc: "Kirim proposal singkat dan lampirkan rencana teknis atau portofolio tim Anda. Pemilik proyek dapat meninjau, meminta klarifikasi, dan menyetujui kelanjutan secara terstruktur melalui platform.",
     icon: "lanjutkan-icon",
   },
   {
     title: "Review Penerus Capstone",
-    desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris fermentum elit est, eu posuere tellus ornare in. Fusce feugiat ligula eu orci fringilla imperdiet.",
+    desc: "Periksa detail anggota, portofolio, dan proposal teknis untuk menilai kesiapan penerus. Berikan keputusan yang transparan, terima, tolak, atau minta revisi, lengkap dengan catatan alasan.",
     icon: "review-icon",
   },
   {
     title: "Beri Rating dan Komentar",
-    desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris fermentum elit est, eu posuere tellus ornare in. Fusce feugiat ligula eu orci fringilla imperdiet.",
+    desc: "Berikan rating dan komentar untuk membantu penerus dan peneliti lain memahami kelebihan serta area perbaikan. Umpan balik yang terstruktur meningkatkan kualitas pengembangan berkelanjutan dan akuntabilitas akademik.",
     icon: "rating-icon",
   },
 ];
