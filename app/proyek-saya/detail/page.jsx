@@ -5,6 +5,26 @@ import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
 import { getMyProjectById } from "../../../lib/mock-data";
 
+const Stars = ({ rating = 0 }) => {
+  const r = Math.max(0, Math.min(5, Number(rating || 0)));
+  return (
+    <div className="flex gap-1 items-center">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <img
+          key={i}
+          src={
+            i < Math.round(r)
+              ? "/assets/icons/star-filled.png"
+              : "/assets/icons/star-empty.png"
+          }
+          alt="star"
+          className="w-6 h-6"
+        />
+      ))}
+    </div>
+  );
+};
+
 export default function DetailProyekPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -12,6 +32,7 @@ export default function DetailProyekPage() {
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState("info");
 
   useEffect(() => {
@@ -32,6 +53,22 @@ export default function DetailProyekPage() {
     }
   }, [id]);
 
+  const handlePrevImage = () => {
+    if (project?.images?.length > 0) {
+      setSelectedImageIndex((prev) =>
+        prev === 0 ? project.images.length - 1 : prev - 1
+      );
+    }
+  };
+
+  const handleNextImage = () => {
+    if (project?.images?.length > 0) {
+      setSelectedImageIndex((prev) =>
+        prev === project.images.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+  
   const getStatusColor = (status) => {
     switch (status) {
       case "Completed":
@@ -98,6 +135,8 @@ export default function DetailProyekPage() {
     );
   }
 
+  const currentImage = project.images?.[selectedImageIndex] || project.thumbnail;
+
   return (
     <FixLayout>
       <div className="min-h-screen bg-[#FCFCFC]">
@@ -123,19 +162,103 @@ export default function DetailProyekPage() {
             </span>
           </div>
 
-          {/* Header dengan Action Buttons */}
-          <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-[#004A74]">{project.title}</h1>
-                <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(project.status)}`}>
-                  {project.status}
-                </span>
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8 mb-12">
+            {/* Left: Hero Image Gallery */}
+            <div className="space-y-4">
+              <div className="relative rounded-lg overflow-hidden h-[400px] group">
+                <img
+                  src={currentImage}
+                  alt={project.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                {project.images?.length > 1 && (
+                  <>
+                    <button
+                      onClick={handlePrevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 shadow-lg transition opacity-0 group-hover:opacity-100"
+                    >
+                      <svg className="w-6 h-6 text-[#004A74]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={handleNextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 shadow-lg transition opacity-0 group-hover:opacity-100"
+                    >
+                      <svg className="w-6 h-6 text-[#004A74]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+                {project.images?.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                    {project.images.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedImageIndex(idx)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          selectedImageIndex === idx
+                            ? "bg-[#FED400] w-6"
+                            : "bg-white/50 hover:bg-white/75"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-              <p className="text-gray-600">{project.category} • {project.year} {project.semester}</p>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {project.images?.map((img, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden cursor-pointer border-2 transition ${
+                      selectedImageIndex === idx
+                        ? "border-[#004A74]"
+                        : "border-gray-200 hover:border-[#004A74]"
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="flex gap-3">
+            {/* Right: Project Info */}
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-[#004A74] mb-3">
+                  {project.title}
+                </h1>
+                <div className="mb-0">
+                  <span className="inline-block text-lg font-regular text-[#004A74] py-1 rounded-full">
+                    {project.category}
+                  </span>
+                </div>
+                <p className="text-md text-gray-600 mb-2 font-regular">
+                  {project.group}
+                </p>
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <Stars rating={project.rating} />
+                      <span className="text-sm text-gray-500">
+                        ({Math.floor(project.rating * 3.4)})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(project.status)}`}>
+                  {project.status}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => router.push(`/proyek-saya/request?projectId=${project.id}`)}
                 className="px-4 py-2 border border-[#004A74] text-[#004A74] rounded-lg hover:bg-blue-50 transition text-sm font-semibold"
@@ -148,6 +271,17 @@ export default function DetailProyekPage() {
               >
                 Edit Proyek
               </button>
+              <button
+                onClick={() => {
+                  if (window.confirm("Apakah Anda yakin ingin menghapus proyek ini?")) {
+                    console.log("Proyek dihapus");
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold"
+              >
+                Hapus Proyek
+              </button>
+            </div>
             </div>
           </div>
 
@@ -197,7 +331,6 @@ export default function DetailProyekPage() {
             </div>
 
             <div className="p-6">
-              {/* Tab: Informasi Proyek */}
               {activeTab === "info" && (
                 <div className="space-y-6">
                   <div>
@@ -218,24 +351,9 @@ export default function DetailProyekPage() {
                       <p className="text-gray-700 leading-relaxed text-justify">{project.developmentSuggestion}</p>
                     </div>
                   )}
-
-                  {/* Gallery */}
-                  {project.images && project.images.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-bold text-[#004A74] mb-3">Galeri</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {project.images.map((img, idx) => (
-                          <div key={idx} className="rounded-lg overflow-hidden border border-gray-200">
-                            <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-48 object-cover" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Tab: Anggota */}
               {activeTab === "members" && (
                 <div className="space-y-4">
                   {project.members && project.members.length > 0 ? (
@@ -259,7 +377,6 @@ export default function DetailProyekPage() {
                 </div>
               )}
 
-              {/* Tab: Dokumen */}
               {activeTab === "documents" && (
                 <div className="space-y-3">
                   {project.documents && project.documents.length > 0 ? (
@@ -290,7 +407,6 @@ export default function DetailProyekPage() {
                 </div>
               )}
 
-              {/* Tab: Timeline */}
               {activeTab === "milestones" && (
                 <div className="space-y-4">
                   {project.milestones && project.milestones.length > 0 ? (
