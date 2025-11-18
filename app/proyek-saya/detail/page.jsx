@@ -1,7 +1,8 @@
 "use client";
-export const dynamic = 'force-dynamic';
-import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation"; // untuk ambil route param
 import FixLayout from "../../../components/FixLayout";
 
 import { Suspense } from 'react';
@@ -29,50 +30,30 @@ const Stars = ({ rating = 0 }) => {
 
 export default function DetailProyekPage() {
   const router = useRouter();
- 
-  const id = searchParams.get("id");
-const searchParams = useSearchParams();
+  const pathname = usePathname(); // contoh: /proyek-saya/123
+  const id = pathname.split("/").pop(); // ambil ID terakhir dari path
 
-useEffect(() => {
-  const paramId = searchParams.get("id");
-  setId(paramId);
-}, [searchParams]);
-  const [project, setProject] = useState(null);
+const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState("info");
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
+    if (!id) return;
 
     const fetchProject = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        console.log("Fetching project with ID:", id);
-        
         const response = await fetch(`http://localhost:5000/api/projects/${id}`, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        console.log("Response status:", response.status);
-        
         if (response.ok) {
           const data = await response.json();
-          console.log("Project data received:", data);
           setProject(data);
         } else {
-          console.error("Failed to fetch project:", response.status);
           setProject(null);
         }
       } catch (err) {
-        console.error("Error fetching project:", err);
+        console.error(err);
         setProject(null);
       } finally {
         setLoading(false);
@@ -81,6 +62,9 @@ useEffect(() => {
 
     fetchProject();
   }, [id]);
+
+  if (loading) return <div>Loading...</div>;
+  if (!project) return <div>Proyek tidak ditemukan</div>;
 
   const handleDeleteProject = async () => {
     if (window.confirm("Apakah Anda yakin ingin menghapus proyek ini?")) {

@@ -1,13 +1,11 @@
-"use client";
+'use client';
 export const dynamic = 'force-dynamic';
 import React, { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
 import RequestAPI from "../../../../lib/request-api";
 import ProjectAPI from "../../../../lib/project-api";
-
 import { Suspense } from 'react';
-
 
 function formatDate(iso) {
     if (!iso) return "-";
@@ -25,46 +23,10 @@ const StatusBadge = ({ status }) => {
     return <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">Waiting for Response</span>;
 };
 
-const MemberCard = ({ member }) => {
-    return (
-        <div className="flex items-center justify-between gap-4 border-t border-gray-200 py-4">
-            <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-gray-200 flex-shrink-0" />
-                <div>
-                    <div className="text-sm font-semibold text-[#004A74]">{member.name}</div>
-                    <div className="text-xs text-gray-500">{member.nim} • {member.major}</div>
-                </div>
-            </div>
-            <div className="flex items-center gap-2">
-                <a
-                    href={member.portfolioUrl || '#'}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`text-sm px-3 py-1 border rounded-md ${member.portfolioUrl ? 'bg-white border-gray-300 text-[#004A74]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-                    onClick={(e) => { if (!member.portfolioUrl) e.preventDefault(); }}
-                >
-                    <img src="/assets/icons/portfolio.png" alt="portfolio" className="w-4 h-4 inline mr-2" />
-                    Lihat Portofolio
-                </a>
-                <a
-                    href={member.linkedinUrl || '#'}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`text-sm px-3 py-1 border rounded-md ${member.linkedinUrl ? 'bg-white border-gray-300 text-[#004A74]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-                    onClick={(e) => { if (!member.linkedinUrl) e.preventDefault(); }}
-                >
-                    <img src="/assets/icons/linkedin.png" alt="linkedin" className="w-4 h-4 inline mr-2" />
-                    Lihat LinkedIn
-                </a>
-            </div>
-        </div>
-    );
-};
-
 export default function RequestDetailPage() {
     const router = useRouter();
-    const params = useSearchParams();
-    const id = params.get("id");
+    const pathname = usePathname();
+    const id = pathname.split("/").pop(); // ambil ID terakhir dari URL
 
     const [req, setReq] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -83,16 +45,12 @@ export default function RequestDetailPage() {
 
             setLoading(true);
             try {
-                // Load request detail from API
                 const requestData = await RequestAPI.getRequestDetail(id);
                 setReq(requestData);
 
-                // Load project owner group info if projectId exists
                 if (requestData?.projectId) {
                     try {
                         const project = await ProjectAPI.getMyProjectById(requestData.projectId);
-                        // Since BE doesn't have group name in project, we'll use requester name
-                        // You might need to adjust this based on your actual data structure
                         setProjectOwnerGroup(requestData.requesterName);
                     } catch (err) {
                         console.error("Failed to load project info:", err);
@@ -115,8 +73,6 @@ export default function RequestDetailPage() {
         setIsProcessing(true);
         try {
             const updated = await RequestAPI.updateRequestStatus(req.id, "Approved");
-            
-            // Update local state with approved status
             setReq(prev => ({
                 ...prev,
                 status: 'Approved',
@@ -124,7 +80,6 @@ export default function RequestDetailPage() {
                 proposalLink: updated.proposalLink
             }));
 
-            // Show success message
             if (updated.proposalLink) {
                 alert(`Request berhasil disetujui! Link proposal: ${updated.proposalLink}`);
             } else {
@@ -149,14 +104,11 @@ export default function RequestDetailPage() {
         setIsProcessing(true);
         try {
             await RequestAPI.updateRequestStatus(req.id, "Rejected", rejectReason || null);
-            
-            // Update local state with rejected status
             setReq(prev => ({
                 ...prev,
                 status: 'Rejected',
                 approved: false
             }));
-            
             setShowRejectModal(false);
             alert('Request berhasil ditolak!');
         } catch (err) {
@@ -172,10 +124,8 @@ export default function RequestDetailPage() {
         setRejectReason("");
     };
 
-    // Transform BE data to FE format for display
     const transformRequestData = (requestData) => {
         if (!requestData) return null;
-
         return {
             id: requestData.id,
             projectId: requestData.projectId,
@@ -190,15 +140,14 @@ export default function RequestDetailPage() {
             subject: "Request untuk melanjutkan proyek",
             message: requestData.message,
             proposalLink: requestData.proposalLink,
-            // Since BE doesn't provide member list, we'll create a single member from requester info
             members: [
                 {
                     id: requestData.id + "-member",
                     name: requestData.requesterName,
-                    nim: "N/A", // Not available from BE
+                    nim: "N/A",
                     major: requestData.requesterDepartment || "Teknik",
-                    portfolioUrl: null, // Not available from BE
-                    linkedinUrl: null // Not available from BE
+                    portfolioUrl: null,
+                    linkedinUrl: null
                 }
             ]
         };
