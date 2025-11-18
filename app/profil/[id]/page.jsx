@@ -57,7 +57,7 @@ export default function ProfileDetailPage() {
     if (!confirm('Hapus anggota ini?')) return;
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${apiBaseUrl}/users/members/${memberId}`, {
         method: 'DELETE',
