@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
-import { getIncomingRequestById, updateIncomingRequestStatus, getMyProjectById } from "../../../../lib/mock-data";
+import RequestAPI from "../../../../lib/request-api";
+import ProjectAPI from "../../../../lib/project-api";
 
 function formatDate(iso) {
     if (!iso) return "-";
@@ -70,38 +71,64 @@ export default function RequestDetailPage() {
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
-        setLoading(true);
-        try {
+        const loadRequestDetail = async () => {
             if (!id) {
                 setReq(null);
                 setLoading(false);
                 return;
             }
-            const r = getIncomingRequestById(id);
-            setReq(r);
+
+            setLoading(true);
             try {
-                const proj = r?.projectId ? getMyProjectById(r.projectId) : null;
-                setProjectOwnerGroup(proj?.group || null);
+                // Load request detail from API
+                const requestData = await RequestAPI.getRequestDetail(id);
+                setReq(requestData);
+
+                // Load project owner group info if projectId exists
+                if (requestData?.projectId) {
+                    try {
+                        const project = await ProjectAPI.getMyProjectById(requestData.projectId);
+                        // Since BE doesn't have group name in project, we'll use requester name
+                        // You might need to adjust this based on your actual data structure
+                        setProjectOwnerGroup(requestData.requesterName);
+                    } catch (err) {
+                        console.error("Failed to load project info:", err);
+                        setProjectOwnerGroup(requestData.requesterName);
+                    }
+                }
             } catch (err) {
-                console.error("Failed to load project owner group:", err);
-                setProjectOwnerGroup(null);
+                console.error("Failed to load incoming request:", err);
+                setReq(null);
+            } finally {
+                setLoading(false);
             }
-        } catch (err) {
-            console.error("Failed to load incoming request:", err);
-            setReq(null);
-        } finally {
-            setLoading(false);
-        }
+        };
+
+        loadRequestDetail();
     }, [id]);
 
     const handleApprove = async () => {
         if (!req) return;
         setIsProcessing(true);
         try {
-            const updated = updateIncomingRequestStatus(req.id, "Approved");
-            setReq(updated);
+            const updated = await RequestAPI.updateRequestStatus(req.id, "Approved");
+            
+            // Update local state with approved status
+            setReq(prev => ({
+                ...prev,
+                status: 'Approved',
+                approved: true,
+                proposalLink: updated.proposalLink
+            }));
+
+            // Show success message
+            if (updated.proposalLink) {
+                alert(`Request berhasil disetujui! Link proposal: ${updated.proposalLink}`);
+            } else {
+                alert('Request berhasil disetujui!');
+            }
         } catch (err) {
-            console.error(err);
+            console.error("Failed to approve request:", err);
             alert("Gagal menyetujui request: " + (err.message || err));
         } finally {
             setIsProcessing(false);
@@ -118,11 +145,19 @@ export default function RequestDetailPage() {
         if (!req) return;
         setIsProcessing(true);
         try {
-            const updated = updateIncomingRequestStatus(req.id, "Rejected", rejectReason || null);
-            setReq(updated);
+            await RequestAPI.updateRequestStatus(req.id, "Rejected", rejectReason || null);
+            
+            // Update local state with rejected status
+            setReq(prev => ({
+                ...prev,
+                status: 'Rejected',
+                approved: false
+            }));
+            
             setShowRejectModal(false);
+            alert('Request berhasil ditolak!');
         } catch (err) {
-            console.error(err);
+            console.error("Failed to reject request:", err);
             alert("Gagal menolak request: " + (err.message || err));
         } finally {
             setIsProcessing(false);
@@ -133,6 +168,40 @@ export default function RequestDetailPage() {
         setShowRejectModal(false);
         setRejectReason("");
     };
+
+    // Transform BE data to FE format for display
+    const transformRequestData = (requestData) => {
+        if (!requestData) return null;
+
+        return {
+            id: requestData.id,
+            projectId: requestData.projectId,
+            projectTitle: requestData.projectTitle,
+            requesterName: requestData.requesterName,
+            groupImage: requestData.teamPhotoUrl || "/assets/default-group.png",
+            groupDescription: requestData.requesterDepartment 
+                ? `Kelompok dari ${requestData.requesterDepartment} angkatan ${requestData.requesterYear || '2024'}`
+                : "Kelompok pengembang proyek",
+            status: requestData.status,
+            createdAt: requestData.createdAt,
+            subject: "Request untuk melanjutkan proyek",
+            message: requestData.message,
+            proposalLink: requestData.proposalLink,
+            // Since BE doesn't provide member list, we'll create a single member from requester info
+            members: [
+                {
+                    id: requestData.id + "-member",
+                    name: requestData.requesterName,
+                    nim: "N/A", // Not available from BE
+                    major: requestData.requesterDepartment || "Teknik",
+                    portfolioUrl: null, // Not available from BE
+                    linkedinUrl: null // Not available from BE
+                }
+            ]
+        };
+    };
+
+    const displayReq = transformRequestData(req);
 
     if (loading) {
         return (
@@ -147,13 +216,18 @@ export default function RequestDetailPage() {
         );
     }
 
-    if (!req) {
+    if (!displayReq) {
         return (
             <FixLayout>
                 <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
                     <div className="text-center py-24">
                         <p className="text-gray-600">Request tidak ditemukan.</p>
-                        <button onClick={() => router.push('/proyek-saya/request')} className="mt-4 px-4 py-2 bg-[#004A74] text-white rounded">Kembali ke Request</button>
+                        <button 
+                            onClick={() => router.push('/proyek-saya/request/masuk')} 
+                            className="mt-4 px-4 py-2 bg-[#004A74] text-white rounded"
+                        >
+                            Kembali ke Request Masuk
+                        </button>
                     </div>
                 </div>
             </FixLayout>
@@ -168,19 +242,24 @@ export default function RequestDetailPage() {
                     <span className="hover:text-[#004A74] cursor-pointer" onClick={() => router.push('/')}>Homepage</span>
                     <span>›</span>
                     <span className="hover:text-[#004A74] cursor-pointer" onClick={() => router.push('/proyek-saya')}>Proyek Saya</span>
-                    {req?.projectTitle && (
+                    {displayReq?.projectTitle && (
                         <>
                             <span>›</span>
                             <span
                                 className="hover:text-[#004A74] cursor-pointer"
-                                onClick={() => router.push(`/proyek-saya/detail?id=${req.projectId}`)}
+                                onClick={() => router.push(`/proyek-saya/detail?id=${displayReq.projectId}`)}
                             >
-                                {req.projectTitle}
+                                {displayReq.projectTitle}
                             </span>
                         </>
                     )}
                     <span>›</span>
-                    <span className="hover:text-[#004A74] cursor-pointer" onClick={() => router.push('/proyek-saya/request')}>Request Masuk</span>
+                    <span 
+                        className="hover:text-[#004A74] cursor-pointer" 
+                        onClick={() => router.push('/proyek-saya/request/masuk' + (displayReq.projectId ? `?projectId=${displayReq.projectId}` : ''))}
+                    >
+                        Request Masuk
+                    </span>
                     <span>›</span>
                     <span className="text-[#004A74] font-semibold">Detail Request</span>
                 </div>
@@ -188,18 +267,30 @@ export default function RequestDetailPage() {
                 {/* Header */}
                 <section className="flex items-start gap-8 mb-10">
                     <div className="w-72 h-48 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                        <img src={req.groupImage} alt={req.requesterName} className="w-full h-full object-cover" />
+                        <img 
+                            src={displayReq.groupImage} 
+                            alt={displayReq.requesterName} 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                e.target.src = "/assets/default-group.png";
+                            }}
+                        />
                     </div>
 
                     <div className="flex-1">
-                        <h1 className="text-3xl lg:text-4xl font-bold text-[#004A74] leading-tight">{projectOwnerGroup || req.requesterName}</h1>
-                        <p className="mt-2 text-base text-[#5B5858]">Angkatan {new Date(req.createdAt).getFullYear()}</p>
+                        <h1 className="text-3xl lg:text-4xl font-bold text-[#004A74] leading-tight">
+                            {projectOwnerGroup || displayReq.requesterName}
+                        </h1>
+                        <p className="mt-2 text-base text-[#5B5858]">
+                            {displayReq.requesterDepartment && `Jurusan ${displayReq.requesterDepartment}`}
+                            {displayReq.requesterYear && ` • Angkatan ${displayReq.requesterYear}`}
+                        </p>
                         <div className="mt-5">
                             <div className="flex items-center gap-4">
-                                <StatusBadge status={req.status} />
+                                <StatusBadge status={displayReq.status} />
                             </div>
 
-                            {req.status === "Waiting for Response" && (
+                            {displayReq.status === "Waiting for Response" && (
                                 <div className="mt-3 flex items-center gap-3">
                                     <button
                                         onClick={handleReject}
@@ -220,25 +311,29 @@ export default function RequestDetailPage() {
                             )}
 
                             <div className="mt-3 text-sm text-gray-600">
-                                <div>Dikirim: {formatDate(req.createdAt)}</div>
-                                <div>Project ID: <span className="font-medium text-gray-800">{req.projectId}</span></div>
+                                <div>Dikirim: {formatDate(displayReq.createdAt)}</div>
+                                <div>Project: <span className="font-medium text-gray-800">{displayReq.projectTitle}</span></div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Main content (single-column like detail/[id]) */}
+                {/* Main content */}
                 <main>
                     <div className="space-y-6">
                         <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <h2 className="text-xl font-bold text-[#004A74] mb-2 pb-2 border-b-2 border-[#FED400] inline-block">Deskripsi Kelompok</h2>
-                            <p className="text-sm text-gray-700 leading-relaxed">{req.groupDescription}</p>
+                            <h2 className="text-xl font-bold text-[#004A74] mb-2 pb-2 border-b-2 border-[#FED400] inline-block">
+                                Deskripsi Kelompok
+                            </h2>
+                            <p className="text-sm text-gray-700 leading-relaxed">{displayReq.groupDescription}</p>
                         </div>
 
                         <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <h2 className="text-xl font-bold text-[#004A74] mb-2 pb-2 border-b-2 border-[#FED400] inline-block">Detail Anggota</h2>
+                            <h2 className="text-xl font-bold text-[#004A74] mb-2 pb-2 border-b-2 border-[#FED400] inline-block">
+                                Detail Anggota
+                            </h2>
                             <div className="divide-y divide-gray-200">
-                                {Array.isArray(req.members) && req.members.map((m) => (
+                                {Array.isArray(displayReq.members) && displayReq.members.map((m) => (
                                     <div key={m.id} className="flex items-center justify-between gap-4 py-4">
                                         <div className="flex items-center gap-4">
                                             <div className="h-12 w-12 rounded-full bg-gray-200 shrink-0" />
@@ -277,47 +372,36 @@ export default function RequestDetailPage() {
                         </div>
 
                         <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <h2 className="text-xl font-bold text-[#004A74] mb-2 pb-2 border-b-2 border-[#FED400] inline-block">Pesan</h2>
+                            <h2 className="text-xl font-bold text-[#004A74] mb-2 pb-2 border-b-2 border-[#FED400] inline-block">
+                                Pesan
+                            </h2>
                             <div className="p-4 border rounded-md bg-gray-50">
-                                <h3 className="font-bold text-[#004A74]">{req.subject}</h3>
-                                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{req.message}</p>
+                                <h3 className="font-bold text-[#004A74]">{displayReq.subject}</h3>
+                                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{displayReq.message}</p>
                             </div>
                         </div>
 
-                        {/* Attachment below message */}
-                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <h2 className="text-xl font-bold text-[#004A74] mb-2 pb-2 border-b-2 border-[#FED400] inline-block">Attachment</h2>
-                            {req.proposalFile ? (
-                                req.proposalFile.base64 ? (
-                                    <div>
-                                        <div className="w-full h-72 border rounded overflow-hidden mb-4">
-                                            <iframe
-                                                title="proposal-preview"
-                                                src={`data:${req.proposalFile.mime};base64,${req.proposalFile.base64}`}
-                                                className="w-full h-full"
-                                            />
-                                        </div>
-                                        <a
-                                            href={`data:${req.proposalFile.mime};base64,${req.proposalFile.base64}`}
-                                            download={req.proposalFile.name}
-                                            className="inline-flex items-center gap-2 px-3 py-2 bg-[#004A74] text-white rounded-md"
-                                        >
-                                            Unduh Proposal ({req.proposalFile.name})
-                                        </a>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="text-sm text-gray-700">{req.proposalFile.name}</div>
-                                            <div className="text-xs text-gray-500">(file tersedia, tetapi tidak ada preview)</div>
-                                        </div>
-                                        <a href="#" className="text-sm text-[#004A74] font-semibold">Unduh</a>
-                                    </div>
-                                )
-                            ) : (
-                                <div className="text-sm text-gray-500">Tidak ada proposal terlampir.</div>
-                            )}
-                        </div>
+                        {/* Proposal Link - Show if approved */}
+                        {displayReq.status === "Approved" && displayReq.proposalLink && (
+                            <div className="bg-white rounded-lg border border-gray-200 p-6">
+                                <h2 className="text-xl font-bold text-[#004A74] mb-2 pb-2 border-b-2 border-[#FED400] inline-block">
+                                    Link Proposal
+                                </h2>
+                                <div className="mt-2">
+                                    <a 
+                                        href={displayReq.proposalLink} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-[#004A74] hover:underline break-all"
+                                    >
+                                        {displayReq.proposalLink}
+                                    </a>
+                                    <p className="text-sm text-gray-600 mt-2">
+                                        Link proposal asli dari proyek ini telah dibagikan kepada kelompok yang disetujui.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </main>
 
@@ -326,19 +410,22 @@ export default function RequestDetailPage() {
                     <div className="fixed inset-0 z-50 flex items-center justify-center">
                         <div className="absolute inset-0 bg-black/40" onClick={cancelReject} />
                         <div className="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg p-6 z-10">
-                            <h3 className="text-lg font-semibold text-[#004A74] mb-2">Alasan Penolakan</h3>
-                            <p className="text-sm text-gray-600 mb-4">Silakan isi alasan penolakan (opsional). Alasan ini akan tersimpan pada detail request.</p>
-                            <textarea
-                                value={rejectReason}
-                                onChange={(e) => setRejectReason(e.target.value)}
-                                rows={4}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#004A74] resize-y"
-                                placeholder="Contoh: jadwal tidak cocok, scope berbeda, dsb."
-                            />
-
+                            <h2 className="text-xl font-bold text-[#004A74] mb-4">Tolak Request</h2>
                             <div className="mt-4 flex justify-end gap-3">
-                                <button onClick={cancelReject} disabled={isProcessing} className="px-4 py-2 rounded-md border text-sm bg-white border-gray-300">Batal</button>
-                                <button onClick={confirmReject} disabled={isProcessing} className="px-4 py-2 rounded-md bg-[#004A74] text-white text-sm">Tolak dan Simpan</button>
+                                <button 
+                                    onClick={cancelReject} 
+                                    disabled={isProcessing}
+                                    className="px-4 py-2 rounded-md border text-sm bg-white border-gray-300 disabled:opacity-50"
+                                >
+                                    Batal
+                                </button>
+                                <button 
+                                    onClick={confirmReject} 
+                                    disabled={isProcessing}
+                                    className="px-4 py-2 rounded-md bg-[#004A74] text-white text-sm disabled:opacity-50"
+                                >
+                                    {isProcessing ? "Memproses..." : "Tolak Request"}
+                                </button>
                             </div>
                         </div>
                     </div>
