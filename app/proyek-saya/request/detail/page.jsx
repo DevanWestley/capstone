@@ -235,6 +235,7 @@ export default function RequestDetailPage() {
     }
 
     return (
+        <Suspense fallback={<div>Loading...</div>}>
         <FixLayout>
             <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
                 {/* Breadcrumb */}
@@ -432,5 +433,6 @@ export default function RequestDetailPage() {
                 )}
             </div>
         </FixLayout>
+        </Suspense>
     );
 }

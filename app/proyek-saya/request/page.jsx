@@ -117,6 +117,7 @@ export default function RequestMasukPage() {
   };
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <FixLayout>
       <div className="min-h-screen bg-[#FCFCFC]">
         <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
@@ -284,5 +285,6 @@ export default function RequestMasukPage() {
         </div>
       </div>
     </FixLayout>
+    </Suspense>
   );
 }
