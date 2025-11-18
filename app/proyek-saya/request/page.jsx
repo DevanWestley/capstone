@@ -1,5 +1,5 @@
 "use client";
-
+export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
@@ -8,7 +8,7 @@ import RequestAPI from "../../../lib/request-api";
 import ProjectAPI from "../../../lib/project-api";
 import { Suspense } from 'react';
 
-export const dynamic = 'force-dynamic';
+
 
 const ICONS = {
   approved: "/assets/icons/v.svg",
@@ -18,14 +18,19 @@ const ICONS = {
 
 export default function RequestMasukPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+ 
   const projectId = searchParams.get("projectId");
 
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("semua");
   const [projectTitle, setProjectTitle] = useState(null);
+const searchParams = useSearchParams();
 
+useEffect(() => {
+  const paramId = searchParams.get("id");
+  setId(paramId);
+}, [searchParams]);
   useEffect(() => {
     const loadRequests = async () => {
       setLoading(true);

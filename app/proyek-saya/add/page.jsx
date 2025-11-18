@@ -9,10 +9,17 @@ import FixLayout from "../../../components/FixLayout";
 
 export default function AddProjectPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  
   
   // --- Defer searchParams until client mounted ---
   const [id, setId] = useState(null);
+
+  const searchParams = useSearchParams();
+
+useEffect(() => {
+  const paramId = searchParams.get("id");
+  setId(paramId);
+}, [searchParams]);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {

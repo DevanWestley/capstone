@@ -29,9 +29,14 @@ const Stars = ({ rating = 0 }) => {
 
 export default function DetailProyekPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+ 
   const id = searchParams.get("id");
+const searchParams = useSearchParams();
 
+useEffect(() => {
+  const paramId = searchParams.get("id");
+  setId(paramId);
+}, [searchParams]);
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
