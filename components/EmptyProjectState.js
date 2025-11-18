@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 //import FixLayout from "../FixLayout";
 import FixLayout from "./FixLayout";
+export const dynamic = 'force-dynamic';
 
 export default function EmptyProjectState() {
   const router = useRouter();

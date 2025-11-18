@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout.jsx";
-import RequestFormClient from "../../../components/RequestFormClient";
+
+export const dynamic = 'force-dynamic';
 
 const Stars = ({ rating = 0, interactive = false, onRatingChange = null }) => {
   const r = Math.max(0, Math.min(5, Number(rating || 0)));

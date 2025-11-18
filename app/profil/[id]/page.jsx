@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
-
+export const dynamic = 'force-dynamic';
 export default function ProfileDetailPage() {
   const router = useRouter();
   const params = useParams();

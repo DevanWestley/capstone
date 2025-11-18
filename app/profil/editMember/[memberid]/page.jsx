@@ -3,10 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
+export const dynamic = 'force-dynamic';
+
 export default function EditMemberPage() {
   const router = useRouter();
   const params = useParams();
   const memberId = params?.memberId;
+
 
   const [form, setForm] = useState({
     name: "",

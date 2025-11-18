@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
+
+export const dynamic = 'force-dynamic';
 export default function ProfileEditPage() {
   const router = useRouter();
   const [form, setForm] = useState({

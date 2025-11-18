@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import FixLayout from "../../components/FixLayout";
 import EmptyProjectState from "../../components/EmptyProjectState";
 
+
 export const dynamic = 'force-dynamic';
 
 

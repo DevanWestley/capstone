@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
 import { Suspense } from 'react';
+export const dynamic = 'force-dynamic';
 
 export default function AddProjectPage() {
   const router = useRouter();

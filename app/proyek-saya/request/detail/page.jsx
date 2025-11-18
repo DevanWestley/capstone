@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
 import RequestAPI from "../../../../lib/request-api";
 import ProjectAPI from "../../../../lib/project-api";
+export const dynamic = 'force-dynamic';
+import { Suspense } from 'react';
+
 
 function formatDate(iso) {
     if (!iso) return "-";

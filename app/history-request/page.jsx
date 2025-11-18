@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import FixLayout from "../../components/FixLayout.jsx";
+export const dynamic = 'force-dynamic';
 
 // Safe icon paths dengan caching
 const ICONS = {

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import FixLayout from "../components/FixLayout.jsx";
+export const dynamic = 'force-dynamic';
 
 const features = [
   {

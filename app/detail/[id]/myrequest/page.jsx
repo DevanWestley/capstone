@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
-
+export const dynamic = 'force-dynamic';
 const PLACEHOLDER_THUMB = "/assets/thumb-placeholder.png";
 const ICONS = {
   approved: "/assets/icons/v.svg",
