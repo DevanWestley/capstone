@@ -16,10 +16,7 @@ export default function AddProjectPage() {
 
   const searchParams = useSearchParams();
 
-useEffect(() => {
-  const paramId = searchParams.get("id");
-  setId(paramId);
-}, [searchParams]);
+
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -68,7 +65,8 @@ useEffect(() => {
   const fetchProjectData = async () => {
   setLoading(true);
   try {
-    const token = localStorage.getItem("token");
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
     
     if (!token) {
       alert("Session expired. Please login again.");
@@ -403,7 +401,7 @@ const removeProjectPhoto = (index) => {
 }
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+
     <FixLayout>
       <div className="min-h-screen bg-[#FCFCFC]">
         <div className="max-w-4xl mx-auto px-6 md:px-8 py-8">
@@ -686,6 +684,6 @@ const removeProjectPhoto = (index) => {
         </div>
       </div>
     </FixLayout>
-    </Suspense>
+
   );
 }
