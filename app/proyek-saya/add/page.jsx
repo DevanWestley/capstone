@@ -1,11 +1,11 @@
 'use client';
-
+export const dynamic = 'force-dynamic';
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
 
 // Force dynamic rendering to avoid prerendering issues
-export const dynamic = 'force-dynamic';
+
 
 export default function AddProjectPage() {
   const router = useRouter();

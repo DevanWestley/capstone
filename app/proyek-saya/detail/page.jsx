@@ -1,8 +1,9 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
-export const dynamic = 'force-dynamic';
+
 import { Suspense } from 'react';
 
 
