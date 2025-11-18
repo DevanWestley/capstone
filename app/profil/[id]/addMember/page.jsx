@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
 import { useParams } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
+
 export default function AddMemberPage() {
   const params = useParams();
   const groupId = params.groupId;
