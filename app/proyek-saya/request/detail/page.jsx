@@ -1,11 +1,10 @@
-'use client';
-export const dynamic = 'force-dynamic';
+"use client";
+
 import React, { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
 import RequestAPI from "../../../../lib/request-api";
 import ProjectAPI from "../../../../lib/project-api";
-import { Suspense } from 'react';
 
 function formatDate(iso) {
     if (!iso) return "-";
@@ -23,11 +22,47 @@ const StatusBadge = ({ status }) => {
     return <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">Waiting for Response</span>;
 };
 
+const MemberCard = ({ member }) => {
+    return (
+        <div className="flex items-center justify-between gap-4 border-t border-gray-200 py-4">
+            <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-gray-200 flex-shrink-0" />
+                <div>
+                    <div className="text-sm font-semibold text-[#004A74]">{member.name}</div>
+                    <div className="text-xs text-gray-500">{member.nim} • {member.major}</div>
+                </div>
+            </div>
+            <div className="flex items-center gap-2">
+                <a
+                    href={member.portfolioUrl || '#'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`text-sm px-3 py-1 border rounded-md ${member.portfolioUrl ? 'bg-white border-gray-300 text-[#004A74]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                    onClick={(e) => { if (!member.portfolioUrl) e.preventDefault(); }}
+                >
+                    <img src="/assets/icons/portfolio.png" alt="portfolio" className="w-4 h-4 inline mr-2" />
+                    Lihat Portofolio
+                </a>
+                <a
+                    href={member.linkedinUrl || '#'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`text-sm px-3 py-1 border rounded-md ${member.linkedinUrl ? 'bg-white border-gray-300 text-[#004A74]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                    onClick={(e) => { if (!member.linkedinUrl) e.preventDefault(); }}
+                >
+                    <img src="/assets/icons/linkedin.png" alt="linkedin" className="w-4 h-4 inline mr-2" />
+                    Lihat LinkedIn
+                </a>
+            </div>
+        </div>
+    );
+};
+
 export default function RequestDetailPage() {
     const router = useRouter();
-    const pathname = usePathname();
-    const id = pathname.split("/").pop(); // ambil ID terakhir dari URL
-
+    
+    // State untuk menangani ID dari URL
+    const [urlId, setUrlId] = useState(null);
     const [req, setReq] = useState(null);
     const [loading, setLoading] = useState(true);
     const [projectOwnerGroup, setProjectOwnerGroup] = useState(null);
@@ -35,9 +70,18 @@ export default function RequestDetailPage() {
     const [rejectReason, setRejectReason] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
 
+    // Ambil ID dari URL saat komponen dimount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            setUrlId(id);
+        }
+    }, []);
+
     useEffect(() => {
         const loadRequestDetail = async () => {
-            if (!id) {
+            if (!urlId) {
                 setReq(null);
                 setLoading(false);
                 return;
@@ -45,12 +89,16 @@ export default function RequestDetailPage() {
 
             setLoading(true);
             try {
-                const requestData = await RequestAPI.getRequestDetail(id);
+                // Load request detail from API
+                const requestData = await RequestAPI.getRequestDetail(urlId);
                 setReq(requestData);
 
+                // Load project owner group info if projectId exists
                 if (requestData?.projectId) {
                     try {
                         const project = await ProjectAPI.getMyProjectById(requestData.projectId);
+                        // Since BE doesn't have group name in project, we'll use requester name
+                        // You might need to adjust this based on your actual data structure
                         setProjectOwnerGroup(requestData.requesterName);
                     } catch (err) {
                         console.error("Failed to load project info:", err);
@@ -65,14 +113,18 @@ export default function RequestDetailPage() {
             }
         };
 
-        loadRequestDetail();
-    }, [id]);
+        if (urlId !== null) { // Tunggu sampai urlId selesai di-set
+            loadRequestDetail();
+        }
+    }, [urlId]);
 
     const handleApprove = async () => {
         if (!req) return;
         setIsProcessing(true);
         try {
             const updated = await RequestAPI.updateRequestStatus(req.id, "Approved");
+            
+            // Update local state with approved status
             setReq(prev => ({
                 ...prev,
                 status: 'Approved',
@@ -80,6 +132,7 @@ export default function RequestDetailPage() {
                 proposalLink: updated.proposalLink
             }));
 
+            // Show success message
             if (updated.proposalLink) {
                 alert(`Request berhasil disetujui! Link proposal: ${updated.proposalLink}`);
             } else {
@@ -104,11 +157,14 @@ export default function RequestDetailPage() {
         setIsProcessing(true);
         try {
             await RequestAPI.updateRequestStatus(req.id, "Rejected", rejectReason || null);
+            
+            // Update local state with rejected status
             setReq(prev => ({
                 ...prev,
                 status: 'Rejected',
                 approved: false
             }));
+            
             setShowRejectModal(false);
             alert('Request berhasil ditolak!');
         } catch (err) {
@@ -124,13 +180,24 @@ export default function RequestDetailPage() {
         setRejectReason("");
     };
 
+    // Fungsi untuk navigasi dengan query parameter
+    const navigateWithQuery = (path, params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        const url = queryString ? `${path}?${queryString}` : path;
+        router.push(url);
+    };
+
+    // Transform BE data to FE format for display
     const transformRequestData = (requestData) => {
         if (!requestData) return null;
+
         return {
             id: requestData.id,
             projectId: requestData.projectId,
             projectTitle: requestData.projectTitle,
             requesterName: requestData.requesterName,
+            requesterDepartment: requestData.requesterDepartment,
+            requesterYear: requestData.requesterYear,
             groupImage: requestData.teamPhotoUrl || "/assets/default-group.png",
             groupDescription: requestData.requesterDepartment 
                 ? `Kelompok dari ${requestData.requesterDepartment} angkatan ${requestData.requesterYear || '2024'}`
@@ -140,14 +207,15 @@ export default function RequestDetailPage() {
             subject: "Request untuk melanjutkan proyek",
             message: requestData.message,
             proposalLink: requestData.proposalLink,
+            // Since BE doesn't provide member list, we'll create a single member from requester info
             members: [
                 {
                     id: requestData.id + "-member",
                     name: requestData.requesterName,
-                    nim: "N/A",
+                    nim: "N/A", // Not available from BE
                     major: requestData.requesterDepartment || "Teknik",
-                    portfolioUrl: null,
-                    linkedinUrl: null
+                    portfolioUrl: null, // Not available from BE
+                    linkedinUrl: null // Not available from BE
                 }
             ]
         };
@@ -187,7 +255,6 @@ export default function RequestDetailPage() {
     }
 
     return (
-        <Suspense fallback={<div>Loading...</div>}>
         <FixLayout>
             <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
                 {/* Breadcrumb */}
@@ -200,7 +267,7 @@ export default function RequestDetailPage() {
                             <span>›</span>
                             <span
                                 className="hover:text-[#004A74] cursor-pointer"
-                                onClick={() => router.push(`/proyek-saya/detail?id=${displayReq.projectId}`)}
+                                onClick={() => navigateWithQuery("/proyek-saya/detail", { id: displayReq.projectId })}
                             >
                                 {displayReq.projectTitle}
                             </span>
@@ -209,7 +276,7 @@ export default function RequestDetailPage() {
                     <span>›</span>
                     <span 
                         className="hover:text-[#004A74] cursor-pointer" 
-                        onClick={() => router.push('/proyek-saya/request/masuk' + (displayReq.projectId ? `?projectId=${displayReq.projectId}` : ''))}
+                        onClick={() => navigateWithQuery("/proyek-saya/request/masuk", displayReq.projectId ? { projectId: displayReq.projectId } : {})}
                     >
                         Request Masuk
                     </span>
@@ -364,6 +431,18 @@ export default function RequestDetailPage() {
                         <div className="absolute inset-0 bg-black/40" onClick={cancelReject} />
                         <div className="relative w-full max-w-md mx-4 bg-white rounded-lg shadow-lg p-6 z-10">
                             <h2 className="text-xl font-bold text-[#004A74] mb-4">Tolak Request</h2>
+                            <div className="mt-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Alasan Penolakan (Opsional)
+                                </label>
+                                <textarea
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    placeholder="Berikan alasan penolakan..."
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#004A74] focus:border-[#004A74]"
+                                    rows="3"
+                                />
+                            </div>
                             <div className="mt-4 flex justify-end gap-3">
                                 <button 
                                     onClick={cancelReject} 
@@ -385,6 +464,5 @@ export default function RequestDetailPage() {
                 )}
             </div>
         </FixLayout>
-        </Suspense>
     );
 }

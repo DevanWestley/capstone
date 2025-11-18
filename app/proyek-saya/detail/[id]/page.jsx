@@ -1,12 +1,7 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation"; // untuk ambil route param
-import FixLayout from "../../../components/FixLayout";
-
-import { Suspense } from 'react';
-
+import React, { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import FixLayout from "../../../../components/FixLayout";
 
 const Stars = ({ rating = 0 }) => {
   const r = Math.max(0, Math.min(5, Number(rating || 0)));
@@ -15,11 +10,7 @@ const Stars = ({ rating = 0 }) => {
       {Array.from({ length: 5 }).map((_, i) => (
         <img
           key={i}
-          src={
-            i < Math.round(r)
-              ? "/assets/icons/star-filled.png"
-              : "/assets/icons/star-empty.png"
-          }
+          src={i < Math.round(r) ? "/assets/icons/star-filled.png" : "/assets/icons/star-empty.png"}
           alt="star"
           className="w-6 h-6"
         />
@@ -28,32 +19,61 @@ const Stars = ({ rating = 0 }) => {
   );
 };
 
+// Fungsi untuk mendapatkan warna status
+const getStatusColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case "selesai":
+    case "completed":
+      return "bg-green-100 text-green-800";
+    case "dalam pengerjaan":
+    case "in progress":
+      return "bg-yellow-100 text-yellow-800";
+    case "ditolak":
+    case "rejected":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
 export default function DetailProyekPage() {
   const router = useRouter();
-  const pathname = usePathname(); // contoh: /proyek-saya/123
-  const id = pathname.split("/").pop(); // ambil ID terakhir dari path
+  const params = useParams();
+  const id = params.id;
 
-const [project, setProject] = useState(null);
+  const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState("info");
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setLoading(false);
+      return;
+    }
 
     const fetchProject = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
+        console.log("Fetching project with ID:", id);
+
         const response = await fetch(`http://localhost:5000/api/projects/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
+
         if (response.ok) {
           const data = await response.json();
           setProject(data);
         } else {
+          console.error("Failed to fetch project:", response.status);
           setProject(null);
         }
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching project:", err);
         setProject(null);
       } finally {
         setLoading(false);
@@ -63,8 +83,22 @@ const [project, setProject] = useState(null);
     fetchProject();
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
-  if (!project) return <div>Proyek tidak ditemukan</div>;
+  // Fungsi untuk navigasi gambar
+  const handlePrevImage = () => {
+    if (transformedProject?.images?.length) {
+      setSelectedImageIndex(prev => 
+        prev === 0 ? transformedProject.images.length - 1 : prev - 1
+      );
+    }
+  };
+
+  const handleNextImage = () => {
+    if (transformedProject?.images?.length) {
+      setSelectedImageIndex(prev => 
+        prev === transformedProject.images.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
 
   const handleDeleteProject = async () => {
     if (window.confirm("Apakah Anda yakin ingin menghapus proyek ini?")) {
@@ -87,52 +121,27 @@ const [project, setProject] = useState(null);
     }
   };
 
-  const handlePrevImage = () => {
-    if (transformedProject?.images?.length > 0) {
-      setSelectedImageIndex((prev) =>
-        prev === 0 ? transformedProject.images.length - 1 : prev - 1
-      );
-    }
-  };
-
-  const handleNextImage = () => {
-    if (transformedProject?.images?.length > 0) {
-      setSelectedImageIndex((prev) =>
-        prev === transformedProject.images.length - 1 ? 0 : prev + 1
-      );
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Completed": return "bg-green-100 text-green-700";
-      case "In Progress": return "bg-blue-100 text-blue-700";
-      case "Draft": return "bg-gray-100 text-gray-700";
-      case "Open": return "bg-green-100 text-green-700";
-      case "Closed": return "bg-gray-100 text-gray-700";
-      default: return "bg-gray-100 text-gray-600";
-    }
-  };
-
-  // PERBAIKAN: Transformasi data yang lebih robust
+  // Transformasi data dengan fallback yang lebih aman
   const transformedProject = project
     ? {
         ...project,
-        _id: project._id,
-        category: project.theme,
-        group: project.ownerId?.groupName || "Nama Kelompok",
-        rating: project.avgRating || 0,
+        _id: project._id || id,
+        category: project.theme || "Tidak ada kategori",
+        group: project.ownerId?.groupName || project.groupName || "Nama Kelompok",
+        rating: project.avgRating || project.rating || 0,
         ratingCount: project.ratingCount || 0,
-        description: project.summary,
-        developmentSuggestion: project.suggestion,
-        images: project.projectPhotoUrls || [],
-        thumbnail: project.projectPhotoUrls?.[0] || "/assets/images/default-project.jpg",
-        members: project.ownerId?.members || [],
-        // PERBAIKAN: Handle documents dengan benar
+        description: project.summary || project.description || "Tidak ada deskripsi",
+        developmentSuggestion: project.suggestion || project.developmentSuggestion || "Tidak ada saran pengembangan",
+        evaluation: project.evaluation || "Tidak ada evaluasi",
+        images: project.projectPhotoUrls || project.images || [],
+        thumbnail: (project.projectPhotoUrls?.[0] || project.thumbnail || "/assets/images/default-project.jpg"),
+        members: project.ownerId?.members || project.members || [],
+        status: project.status || "Tidak diketahui",
+        title: project.title || "Judul Tidak Tersedia",
         documents: project.proposalDriveLink
           ? [
               {
-                id: project.proposalDriveLink.driveFileId || '1',
+                id: project.proposalDriveLink.driveFileId || "1",
                 name: project.proposalDriveLink.fileName || "Proposal",
                 type: "Proposal",
                 size: "PDF",
@@ -140,15 +149,12 @@ const [project, setProject] = useState(null);
                   ? new Date(project.createdAt).toLocaleDateString("id-ID")
                   : new Date().toLocaleDateString("id-ID"),
                 url: project.proposalDriveLink.downloadLink,
-                viewLink: project.proposalDriveLink.viewLink
+                viewLink: project.proposalDriveLink.viewLink,
               },
             ]
-          : [],
+          : project.documents || [],
       }
     : null;
-
-  console.log("Transformed project:", transformedProject);
-  console.log("Documents:", transformedProject?.documents);
 
   const currentImage =
     transformedProject?.images?.[selectedImageIndex] ||
@@ -173,21 +179,6 @@ const [project, setProject] = useState(null);
       <FixLayout>
         <div className="min-h-screen bg-[#FCFCFC] flex items-center justify-center">
           <div className="text-center max-w-md mx-auto">
-            <div className="mb-6">
-              <svg
-                className="w-24 h-24 text-gray-400 mx-auto"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
             <h2 className="text-2xl font-bold text-gray-700 mb-4">Proyek Tidak Ditemukan</h2>
             <p className="text-gray-500 mb-6">
               Proyek yang Anda cari tidak ditemukan atau mungkin telah dihapus.
@@ -213,7 +204,6 @@ const [project, setProject] = useState(null);
   }
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
     <FixLayout>
       <div className="min-h-screen bg-[#FCFCFC]">
         <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
@@ -227,7 +217,7 @@ const [project, setProject] = useState(null);
               Proyek Saya
             </span>
             <span>›</span>
-            <span className="text-[#004A74] font-semibold line-clamp-1">
+            <span className="text-[#004A74] font-semibold truncate max-w-[200px]">
               {transformedProject.title}
             </span>
           </div>
@@ -237,7 +227,14 @@ const [project, setProject] = useState(null);
             {/* Image */}
             <div className="space-y-4">
               <div className="relative rounded-lg overflow-hidden h-[400px] group">
-                <img src={currentImage} alt={transformedProject.title} className="w-full h-full object-cover" />
+                <img 
+                  src={currentImage} 
+                  alt={transformedProject.title} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = "/assets/images/default-project.jpg";
+                  }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
 
                 {transformedProject.images?.length > 1 && (
@@ -283,7 +280,14 @@ const [project, setProject] = useState(null);
                         selectedImageIndex === idx ? "border-[#004A74]" : "border-gray-200 hover:border-[#004A74]"
                       }`}
                     >
-                      <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                      <img 
+                        src={img} 
+                        alt={`Thumbnail ${idx + 1}`} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = "/assets/images/default-project.jpg";
+                        }}
+                      />
                     </div>
                   ))}
                 </div>
@@ -378,21 +382,21 @@ const [project, setProject] = useState(null);
                     <div>
                       <h3 className="text-lg font-semibold text-[#004A74] mb-3">Deskripsi Proyek</h3>
                       <p className="text-gray-700 leading-relaxed">
-                        {transformedProject.description || "Tidak ada deskripsi"}
+                        {transformedProject.description}
                       </p>
                     </div>
                     
                     <div>
                       <h3 className="text-lg font-semibold text-[#004A74] mb-3">Evaluasi</h3>
                       <p className="text-gray-700 leading-relaxed">
-                        {transformedProject.evaluation || "Tidak ada evaluasi"}
+                        {transformedProject.evaluation}
                       </p>
                     </div>
 
                     <div>
                       <h3 className="text-lg font-semibold text-[#004A74] mb-3">Saran Pengembangan</h3>
                       <p className="text-gray-700 leading-relaxed">
-                        {transformedProject.developmentSuggestion || "Tidak ada saran pengembangan"}
+                        {transformedProject.developmentSuggestion}
                       </p>
                     </div>
                   </div>
@@ -408,7 +412,14 @@ const [project, setProject] = useState(null);
                         >
                           <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center shrink-0">
                             {member.photoUrl ? (
-                              <img src={member.photoUrl} alt={member.name} className="w-full h-full rounded-full object-cover" />
+                              <img 
+                                src={member.photoUrl} 
+                                alt={member.name} 
+                                className="w-full h-full rounded-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
+                              />
                             ) : (
                               <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                                 <path
@@ -420,9 +431,9 @@ const [project, setProject] = useState(null);
                             )}
                           </div>
                           <div className="flex-1">
-                            <div className="font-semibold text-[#004A74]">{member.name}</div>
-                            <div className="text-sm text-gray-600">{member.nim}</div>
-                            <div className="text-sm text-gray-500">{member.major}</div>
+                            <div className="font-semibold text-[#004A74]">{member.name || "Nama tidak tersedia"}</div>
+                            <div className="text-sm text-gray-600">{member.nim || "NIM tidak tersedia"}</div>
+                            <div className="text-sm text-gray-500">{member.major || "Jurusan tidak tersedia"}</div>
                             {member.linkedinUrl && (
                               <a href={member.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
                                 LinkedIn
@@ -493,6 +504,5 @@ const [project, setProject] = useState(null);
         </div>
       </div>
     </FixLayout>
-    </Suspense>
   );
 }

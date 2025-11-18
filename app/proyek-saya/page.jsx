@@ -16,7 +16,7 @@ export default function ProyekSayaPage() {
       try {
         setLoading(true);
         setError(null);
-        
+
         const token = localStorage.getItem("token");
         if (!token) {
           setError("Token tidak ditemukan. Silakan login kembali.");
@@ -34,13 +34,9 @@ export default function ProyekSayaPage() {
           }
         );
 
-        console.log("Response status:", response.status);
-        
         if (response.ok) {
           const data = await response.json();
-          console.log("Projects data:", data);
-          
-          // PERBAIKAN: Handle struktur response yang berbeda
+
           if (data.projects) {
             setProjects(data.projects);
           } else if (Array.isArray(data)) {
@@ -54,17 +50,17 @@ export default function ProyekSayaPage() {
             router.push("/login");
             return;
           }
-          
+
           const errorText = await response.text();
           let errorMessage = "Gagal memuat proyek";
-          
+
           try {
             const errorData = JSON.parse(errorText);
             errorMessage = errorData.message || errorMessage;
           } catch {
             errorMessage = errorText || errorMessage;
           }
-          
+
           setError(errorMessage);
         }
       } catch (err) {
@@ -78,12 +74,11 @@ export default function ProyekSayaPage() {
     fetchUserProjects();
   }, [router]);
 
-  // REDIRECT otomatis jika user punya 1 proyek
+  // Redirect otomatis jika user punya 1 proyek
   useEffect(() => {
     if (!loading && projects.length === 1) {
       const projectId = projects[0]._id || projects[0].id;
-      console.log("Redirecting to project detail:", projectId);
-      router.push(`/proyek-saya/detail?id=${projectId}`);
+      router.push(`/proyek-saya/detail/${projectId}`);
     }
   }, [loading, projects, router]);
 
