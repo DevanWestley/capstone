@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 /**
  * Props:
@@ -8,15 +9,14 @@ import React, { useState } from "react";
  * - onSubmitted?: function(createdRequest) — dipanggil jika submit sukses
  */
 export default function RequestFormClient({ project, onSubmitted }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
   const openForm = () => {
-    setName("");
     setMessage("");
     setError(null);
     setSuccessMsg(null);
@@ -32,41 +32,54 @@ export default function RequestFormClient({ project, onSubmitted }) {
     setError(null);
     setSuccessMsg(null);
 
-    if (!name || name.trim().length < 2) {
-      setError("Nama minimal 2 karakter.");
+    if (!message || message.trim().length < 10) {
+      setError("Pesan minimal 10 karakter untuk menjelaskan rencana Anda.");
       return;
     }
 
     setLoading(true);
 
-    const payload = {
-      projectId: project.id,
-      projectTitle: project.title,
-      requester: name.trim(),
-      message: message.trim(),
-    };
-
-    // optimistic UI could be added, but keep simple here
     try {
-      const res = await fetch("/api/requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || `HTTP ${res.status}`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error("Silakan login terlebih dahulu!");
       }
 
-      const created = await res.json();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      
+      const response = await fetch(`${apiUrl}/api/requests/projects/${project.id}/request`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          message: message.trim()
+        })
+      });
 
-      setSuccessMsg("Request berhasil dikirim. Tunggu konfirmasi dari tim.");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || `HTTP ${response.status}`);
+      }
+
+      const createdRequest = await response.json();
+      
+      setSuccessMsg("Request berhasil dikirim! Tunggu konfirmasi dari pemilik project.");
       setOpen(false);
 
-      if (typeof onSubmitted === "function") onSubmitted(created);
+      if (typeof onSubmitted === "function") {
+        onSubmitted(createdRequest);
+      }
+
+      // Refresh halaman setelah beberapa detik
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+
     } catch (err) {
       setError(err.message || "Gagal mengirim request.");
+      console.error("Submit request error:", err);
     } finally {
       setLoading(false);
     }
@@ -79,13 +92,13 @@ export default function RequestFormClient({ project, onSubmitted }) {
           e.stopPropagation();
           openForm();
         }}
-        className="px-3 py-2 bg-[#004A74] text-white rounded hover:opacity-95"
+        className="w-full py-3 bg-[#004A74] text-white font-semibold rounded-lg hover:bg-[#003d5e] transition shadow-lg"
       >
-        Request Lanjutkan
+        Kirim Request
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/40"
             onClick={closeForm}
@@ -93,48 +106,78 @@ export default function RequestFormClient({ project, onSubmitted }) {
           />
           <form
             onSubmit={submit}
-            className="relative z-10 w-full max-w-lg bg-white rounded-lg shadow-lg p-6"
+            className="relative z-10 w-full max-w-lg bg-white rounded-lg shadow-lg p-6 max-h-[90vh] overflow-y-auto"
           >
-            <h3 className="text-lg font-semibold mb-3">Request Lanjutkan</h3>
-            <p className="text-sm text-slate-600 mb-3">Project: <strong>{project.title}</strong></p>
+            <h3 className="text-lg font-semibold mb-3 text-[#004A74]">Request Lanjutkan Project</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Project: <strong className="text-[#004A74]">{project.title}</strong>
+            </p>
 
-            <label className="block text-xs font-medium">Nama Anda</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 border rounded mb-3"
-              placeholder="Nama lengkap"
-              required
-            />
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Pesan / Rencana Pengembangan *
+              </label>
+              <textarea
+  value={message}
+  onChange={(e) => {
+    setMessage(e.target.value);
+    // auto-expand height
+    e.target.style.height = "auto";
+    e.target.style.height = `${e.target.scrollHeight}px`;
+  }}
+  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#004A74] focus:ring-1 focus:ring-[#004A74] resize-none"
+  rows={5}
+  placeholder="Jelaskan rencana pengembangan atau alasan Anda ingin melanjutkan project ini. Minimal 10 karakter."
+  required
+/>
 
-            <label className="block text-xs font-medium">Pesan / Rencana</label>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="w-full p-2 border rounded mb-3"
-              rows={4}
-              placeholder="Jelaskan singkat rencana lanjutan atau alasan"
-            />
+              <p className="text-xs text-gray-500 mt-1">
+                {message.length}/10 karakter
+              </p>
+            </div>
 
-            {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
-            {successMsg && <p className="text-sm text-green-600 mb-2">{successMsg}</p>}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
 
-            <div className="flex justify-end gap-2">
+            {successMsg && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-600">{successMsg}</p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={closeForm}
-                className="px-3 py-2 border rounded"
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
                 disabled={loading}
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="px-3 py-2 bg-[#004A74] text-white rounded"
-                disabled={loading}
+                className="px-4 py-2 bg-[#004A74] text-white rounded-lg hover:bg-[#003d5e] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading || message.trim().length < 10}
               >
-                {loading ? "Mengirim..." : "Kirim Request"}
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Mengirim...
+                  </span>
+                ) : (
+                  "Kirim  Request"
+                )}
               </button>
+            </div>
+
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-xs text-blue-600">
+                <strong>Note:</strong> Request Anda akan dikirim ke pemilik project. 
+                Anda akan menerima notifikasi via email ketika request disetujui.
+              </p>
             </div>
           </form>
         </div>

@@ -27,6 +27,7 @@ const features = [
   },
 ];
 
+// Komponen Stars untuk rating (akan digunakan jika BE menyediakan data rating)
 const Stars = ({ rating = 0 }) => {
   const r = Math.max(0, Math.min(5, Number(rating || 0)));
   return (
@@ -49,30 +50,62 @@ const Stars = ({ rating = 0 }) => {
 
 export default function HomePage() {
   const router = useRouter();
-  const [capstones, setCapstones] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Fetch 6 capstone terbaru dengan status "Approved"
   useEffect(() => {
-    setLoading(true);
-    fetch("/api/projects")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        // Filter hanya yang Approved, sort by date (terbaru), ambil 6
-        const approved = data
-          .filter((p) => p.status === "Approved")
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
-          .slice(0, 6);
-        setCapstones(approved);
-        setLoading(false);
-      })
-      .catch((err) => {
+    const saved = localStorage.getItem("isLoggedIn") === "true";
+    setIsLoggedIn(saved);
+  }, []);
+
+  // Fetch 6 project terbaru dengan status "Open" dari BE
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        
+        // Fetch projects dengan limit 6 dan status Open
+        const response = await fetch(`${apiUrl}/api/projects?limit=6&status=Open`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Transform data dari BE ke format yang diharapkan FE
+        const transformedProjects = data.projects.map(project => ({
+          id: project._id,
+          title: project.title,
+          category: project.theme,
+          group: project.ownerId?.groupName || 'Kelompok',
+          summary: project.summary,
+          thumbnail: project.projectPhotoUrls?.[0] || "/assets/images/default-project.jpg",
+          status: project.status,
+          availableForContinuation: project.status === 'Open',
+          // Jika BE menyediakan rating, bisa ditambahkan di sini
+          // rating: project.averageRating || 0,
+          createdAt: project.createdAt
+        }));
+        
+        // Sort by creation date (terbaru)
+        const sortedProjects = transformedProjects.sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        
+        setProjects(sortedProjects);
+      } catch (err) {
         console.error("Error fetching projects:", err);
+        // Fallback: tetap set empty array
+        setProjects([]);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchProjects();
   }, []);
 
   const handleDetailClick = (id) => {
@@ -111,22 +144,24 @@ export default function HomePage() {
                   untuk mendukung kesinambungan proyek capstone di lingkungan
                   DTETI FT UGM.
                 </p>
-                <button
-                  onClick={() => router.push("/login")}
-                  className="mt-5 px-5 py-2 bg-white text-[#004A74] font-semibold rounded shadow hover:bg-gray-100 transition"
-                >
-                  Gabung Sekarang
-                </button>
+                {!isLoggedIn && (
+                  <button
+                    onClick={() => router.push("/login")}
+                    className="mt-5 px-5 py-2 bg-white text-[#004A74] font-semibold rounded shadow hover:bg-gray-100 transition"
+                  >
+                    Gabung Sekarang
+                  </button>
+                )}
               </div>
             </div>
           </section>
 
-          {/* DAFTAR CAPSTONE SECTION */}
+          {/* DAFTAR PROJECT SECTION */}
           <section className="mb-20">
             <div className="text-center mb-10">
               <div className="inline-block">
                 <h2 className="text-3xl font-bold text-[#004A74] relative">
-                  Daftar Capstone
+                  Daftar Project Capstone
                 </h2>
                 <div className="h-1 bg-[#FED400] rounded mt-2"></div>
               </div>
@@ -136,64 +171,64 @@ export default function HomePage() {
             {loading && (
               <div className="text-center py-10">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#004A74]"></div>
-                <p className="text-gray-500 mt-4">Memuat capstone...</p>
+                <p className="text-gray-500 mt-4">Memuat project...</p>
               </div>
             )}
 
-            {/* Capstone Grid */}
-            {!loading && capstones.length > 0 && (
+            {/* Project Grid */}
+            {!loading && projects.length > 0 && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-                  {capstones.map((capstone) => (
+                  {projects.map((project) => (
                     <div
-                      key={capstone.id}
+                      key={project.id}
                       className="bg-white rounded-[12px] overflow-hidden border border-gray-200 shadow hover:shadow-lg transition cursor-pointer"
-                      onClick={() => handleDetailClick(capstone.id)}
+                      onClick={() => handleDetailClick(project.id)}
                     >
                       {/* Thumbnail dengan padding sesuai content card */}
                       <div className="p-4">
                         <div className="relative h-36 overflow-hidden bg-gradient-to-br from-red-100 via-orange-50 to-pink-100 rounded-[12px]">
                           <img
-                            src={
-                              capstone.thumbnail ||
-                              "/assets/thumb-placeholder.png"
-                            }
-                            alt={capstone.title}
+                            src={project.thumbnail}
+                            alt={project.title}
                             className="w-full h-full object-cover"
                           />
                         </div>
                       </div>
 
                       {/* Content */}
-                      <div className="px-4 pb-5">
+                      <div className="px-4 pb-5 flex flex-col h-full">
                         <p className="text-xs font-regular text-[#004A74] tracking-wide">
-                          {capstone.category || "Tanpa Kategori"}
+                          {(project.category || "Tanpa Kategori").toUpperCase()}
                         </p>
                         <h3 className="text-base font-bold text-[#004A74] mt-2 leading-tight line-clamp-2">
-                          {capstone.title}
+                          {project.title}
                         </h3>
 
-                        {/* Rating */}
-                        <div className="mt-2">
-                          <Stars rating={capstone.rating} />
-                        </div>
+                        
 
-                        {/* Group Name */}
+                        {/* Rating & Comment Count */}
+  <div className="flex items-center gap-2 mt-1">
+    <Stars rating={project.rating || 0} />
+    <span className="text-xs text-gray-500">
+      ({project.commentCount || 0} komentar)
+    </span>
+  </div>
+  {/* Group Name */}
                         <p className="text-xs text-gray-500 mt-2">
-                          {capstone.group || "Kelompok"}
+                          {project.group}
                         </p>
 
                         {/* Description */}
                         <p className="text-sm text-[#332C2B] mt-3 leading-relaxed line-clamp-3">
-                          {capstone.summary ||
-                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris fermentum elit est, eu posuere tellus ornare in. Fusce feugiat ligula eu orci fringilla imperdiet."}
+                          {project.summary}
                         </p>
 
                         {/* Link & Status Badge */}
                         <div className="flex items-center justify-between mt-4">
                           <div className="flex items-center gap-2 text-[#004A74] font-semibold group">
                             <span className="text-sm relative">
-                              Lihat Detail Capstone
+                              Lihat Detail Project
                               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FED400] transition-all duration-300 group-hover:w-full"></span>
                             </span>
                             <img
@@ -204,7 +239,7 @@ export default function HomePage() {
                           </div>
 
                           {/* Status Badge */}
-                          {capstone.availableForContinuation ? (
+                          {project.availableForContinuation ? (
                             <div className="flex items-center gap-1 text-green-600 text-xs">
                               <svg
                                 className="w-4 h-4"
@@ -251,18 +286,26 @@ export default function HomePage() {
                     onClick={handleViewAllClick}
                     className="px-8 py-2.5 bg-[#004A74] text-white font-semibold rounded-[6px] hover:bg-[#FED400] transition shadow"
                   >
-                    Lihat Semua Capstone
+                    Lihat Semua Project
                   </button>
                 </div>
               </>
             )}
 
             {/* Empty State */}
-            {!loading && capstones.length === 0 && (
+            {!loading && projects.length === 0 && (
               <div className="text-center py-10">
                 <p className="text-gray-500">
-                  Belum ada capstone yang tersedia.
+                  Belum ada project capstone yang tersedia.
                 </p>
+                {isLoggedIn && (
+                  <button
+                    onClick={() => router.push("/projects/create")}
+                    className="mt-4 px-6 py-2 bg-[#004A74] text-white rounded hover:bg-[#003d5e] transition"
+                  >
+                    Buat Project Pertama
+                  </button>
+                )}
               </div>
             )}
           </section>
@@ -290,7 +333,7 @@ export default function HomePage() {
                     <img
                       src={`/assets/icons/${feature.icon}.png`}
                       alt={feature.title}
-                      className="w-auto h-auto object-contain "
+                      className="w-auto h-auto object-contain"
                     />
                   </div>
 

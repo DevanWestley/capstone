@@ -1,43 +1,120 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import FixLayout from "../../../../components/FixLayout";
+import FixLayout from "../../../../../components/FixLayout";
 
-export default function ProfileEditPage() {
+export default function EditMemberPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params?.id;
+  const memberId = params?.memberId;
 
   const [form, setForm] = useState({
-    title: "",
-    email: "",
-    angkatan: "",
-    description: "",
+    name: "",
+    nim: "",
+    major: "",
+    linkedinUrl: "",
+    portfolioUrl: "",
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock fetch data profil
-    const data = {
-      title: "Kelompok Lorem ipsum",
-      email: "kelompok@example.com",
-      angkatan: "2023",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    };
-    setForm(data);
-  }, [id]);
+    const fetchMemberData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  const handleSave = () => {
-    alert("Data tersimpan!");
-    router.push(`/profil/${id}`);
+        // First get the profile to find the specific member
+        const response = await fetch(`${apiUrl}/api/users/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile');
+        }
+
+        const profileData = await response.json();
+        const member = profileData.members.find(m => m._id === memberId);
+
+        if (member) {
+          setForm({
+            name: member.name || "",
+            nim: member.nim || "",
+            major: member.major || "",
+            linkedinUrl: member.linkedinUrl || "",
+            portfolioUrl: member.portfolioUrl || "",
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching member data:', err);
+        alert('Gagal memuat data anggota');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (memberId) {
+      fetchMemberData();
+    }
+  }, [memberId]);
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+      const response = await fetch(`${apiUrl}/api/users/members/${memberId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(form)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update member');
+      }
+
+      alert('Anggota berhasil diupdate');
+      router.push("/profil");
+    } catch (err) {
+      console.error('Error updating member:', err);
+      alert('Gagal mengupdate anggota');
+    }
+  };
+
+  if (loading) {
+    return (
+      <FixLayout>
+        <div className="min-h-screen flex items-center justify-center bg-[#FCFCFC]">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#004A74]"></div>
+            <p className="text-gray-500 mt-3">Memuat...</p>
+          </div>
+        </div>
+      </FixLayout>
+    );
+  }
 
   return (
     <FixLayout>
-      <div className="min-h-screen bg-[#FCFCFC] py-10 px-6">
-
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-[#FCFCFC]">
+        <div className="max-w-4xl mx-auto px-6 md:px-8 py-10">
 
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
@@ -50,97 +127,126 @@ export default function ProfileEditPage() {
             <span>›</span>
             <span
               className="hover:text-[#004A74] cursor-pointer"
-              onClick={() => router.push(`/profil/${id}`)}
+              onClick={() => router.push("/profil")}
             >
               Profil
             </span>
             <span>›</span>
-            <span className="text-[#004A74] font-semibold">
-              Edit Profil
-            </span>
+            <span className="text-[#004A74] font-semibold">Edit Anggota</span>
           </div>
 
           {/* Heading */}
           <h1 className="text-3xl font-bold text-[#004A74] mb-2">
-            Edit Profil Kelompok
+            Edit Anggota
           </h1>
           <div className="h-1 bg-[#FED400] rounded mb-8"></div>
 
-          {/* Edit Form */}
-          <div className="bg-white shadow border border-gray-200 rounded-lg p-6">
-            <div className="space-y-5">
+          {/* FORM */}
+          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg shadow p-6 space-y-8">
+            {/* BOX 1 – Informasi Dasar */}
+            <div className="border border-gray-200 bg-gray-50 rounded-lg p-4">
+              <h2 className="font-semibold text-gray-700 mb-4">
+                Informasi Dasar Anggota
+              </h2>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Judul
-                </label>
-                <input
-                  value={form.title}
-                  onChange={(e) =>
-                    setForm({ ...form, title: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:ring-2 focus:ring-[#004A74]"
-                />
-              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Nama Anggota
+                  </label>
+                  <input
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#004A74]"
+                    placeholder="Masukkan nama anggota"
+                  />
+                </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm({ ...form, email: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:ring-2 focus:ring-[#004A74]"
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    NIM
+                  </label>
+                  <input
+                    name="nim"
+                    value={form.nim}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#004A74]"
+                    placeholder="Masukkan NIM"
+                  />
+                </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Angkatan
-                </label>
-                <input
-                  value={form.angkatan}
-                  onChange={(e) =>
-                    setForm({ ...form, angkatan: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:ring-2 focus:ring-[#004A74]"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Deskripsi Kelompok
-                </label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded px-3 py-2 mt-1 h-32 focus:ring-2 focus:ring-[#004A74]"
-                ></textarea>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Jurusan
+                  </label>
+                  <input
+                    name="major"
+                    value={form.major}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#004A74]"
+                    placeholder="Masukkan jurusan"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Buttons */}
-            <div className="flex justify-end mt-6 gap-4">
+            {/* BOX 2 – Link LinkedIn & Portofolio */}
+            <div className="border border-gray-200 bg-gray-50 rounded-lg p-4">
+              <h2 className="font-semibold text-gray-700 mb-4">
+                Link & Portofolio
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Link LinkedIn
+                  </label>
+                  <input
+                    name="linkedinUrl"
+                    value={form.linkedinUrl}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#004A74]"
+                    placeholder="https://linkedin.com/in/..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Link Portofolio
+                  </label>
+                  <input
+                    name="portfolioUrl"
+                    value={form.portfolioUrl}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#004A74]"
+                    placeholder="https://portfolio.com/..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* BUTTONS */}
+            <div className="flex items-center justify-end gap-4 pt-4">
               <button
-                onClick={() => router.push(`/profil/${id}`)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-100"
+                type="button"
+                onClick={() => router.push("/profil")}
+                className="px-4 py-2 border text-gray-600 rounded-lg hover:bg-gray-100"
               >
                 Batal
               </button>
 
               <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-[#004A74] text-white rounded shadow hover:bg-[#003d5e]"
+                type="submit"
+                className="px-5 py-2 bg-[#004A74] text-white rounded-lg font-semibold hover:bg-[#003d5e]"
               >
                 Simpan Perubahan
               </button>
             </div>
-          </div>
-
+          </form>
         </div>
       </div>
     </FixLayout>

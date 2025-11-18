@@ -3,12 +3,38 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { 
+  ArrowRightOnRectangleIcon,   // login
+  ArrowLeftOnRectangleIcon,    // logout
+} from "@heroicons/react/24/outline";
+import { UserCircleIcon } from "@heroicons/react/24/solid";
+
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState(null);
+
+
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+
+  useEffect(() => {
+  const savedLogin = localStorage.getItem("isLoggedIn") === "true";
+  const savedUsername = localStorage.getItem("username");
+
+  const savedUser = localStorage.getItem("user");
+  const parsedUser = savedUser ? JSON.parse(savedUser) : null;
+
+  setIsLoggedIn(savedLogin);
+  if (savedLogin && savedUsername) setUsername(savedUsername);
+
+  // Ambil foto
+  setProfilePhoto(parsedUser?.teamPhotoUrl || null);
+}, []);
+
 
   // Load login state on page load
   useEffect(() => {
@@ -22,6 +48,7 @@ export default function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("username");
     setIsLoggedIn(false);
     router.push("/");
   };
@@ -30,9 +57,9 @@ export default function Header() {
   const menu = [
     { name: "Beranda", href: "/" },
     { name: "Katalog", href: "/katalog" },
-    { name: "Riwayat", href: "/history-request" },
     // only show these when logged in
     ...(isLoggedIn ? [
+      { name: "Riwayat", href: "/history-request" },
       { name: "Proyek", href: "/proyek-saya" },
       { name: "Profil", href: "/profil/1" }
     ] : []),
@@ -87,17 +114,39 @@ export default function Header() {
           {!isLoggedIn ? (
             <li
               onClick={handleLogin}
-              className="px-6 py-4 cursor-pointer hover:text-[#FED400] hover:bg-[#0d4f82] border-l border-[#0f4c75]"
+              className="flex items-center gap-2 px-6 py-4 cursor-pointer hover:text-[#FED400] hover:bg-[#0d4f82] border-l border-[#0f4c75]"
             >
+              <ArrowRightOnRectangleIcon className="w-5 h-5" />
               LOGIN
             </li>
           ) : (
+            <>
+             <li className="flex items-center gap-2 px-6 py-4 border-l border-[#0f4c75]">
+              {/* FOTO PROFIL ATAU ICON */}
+  {profilePhoto ? (
+    <img
+      src={profilePhoto}
+      alt="Profile"
+      onError={(e) => { e.target.src = "/assets/images/default-user.png"; }} // fallback jika foto error
+      className="w-8 h-8 rounded-full object-cover border border-white"
+    />
+  ) : (
+    <UserCircleIcon className="w-8 h-8 text-gray-300" />
+  )}
+
+  {/* USERNAME */}
+  <span className="font-medium tracking-wide">
+    {username?.toUpperCase()}
+  </span>
+              </li>
             <li
               onClick={handleLogout}
-              className="px-6 py-4 cursor-pointer hover:bg-red-700 border-l border-[#0f4c75]"
+              className="flex items-center gap-2 px-6 py-4 cursor-pointer hover:bg-red-700 border-l border-[#0f4c75]"
             >
+              <ArrowLeftOnRectangleIcon className="w-5 h-5" />
               LOGOUT
             </li>
+            </>
           )}
 
         </ul>

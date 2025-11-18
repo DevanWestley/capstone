@@ -1,24 +1,59 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import FixLayout from "../../components/FixLayout.jsx";
 
-const PLACEHOLDER_THUMB = "/assets/thumb-placeholder.png";
+// Safe icon paths dengan caching
 const ICONS = {
   approved: "/assets/icons/v.svg",
-  rejected: "/assets/icons/x.svg",
+  rejected: "/assets/icons/x.svg", 
   waiting: "/assets/icons/w.svg",
-  progress: "/assets/icons/progress.svg",
 };
 
-const Stars = ({ rating = 0 }) => {
+const PLACEHOLDER_THUMB = "/assets/thumb-placeholder.png";
+
+// Optimasi Image Component dengan lazy loading
+const SafeImage = React.memo(({ src, alt, className, fallback = PLACEHOLDER_THUMB }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [loading, setLoading] = useState(true);
+  
+  const handleError = useCallback(() => {
+    setImgSrc(fallback);
+    setLoading(false);
+  }, [fallback]);
+  
+  const handleLoad = useCallback(() => {
+    setLoading(false);
+  }, []);
+  
+  return (
+    <div className={`relative ${className}`}>
+      {loading && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse rounded"></div>
+      )}
+      <img
+        src={imgSrc || fallback}
+        alt={alt}
+        className={`${className} ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+        onError={handleError}
+        onLoad={handleLoad}
+        loading="lazy"
+      />
+    </div>
+  );
+});
+
+SafeImage.displayName = 'SafeImage';
+
+const Stars = React.memo(({ rating = 0 }) => {
   const r = Math.max(0, Math.min(5, Number(rating || 0)));
+  
   return (
     <div className="flex gap-1 items-center">
       {Array.from({ length: 5 }).map((_, i) => (
-        <img
+        <SafeImage
           key={i}
           src={
             i < Math.round(r)
@@ -27,109 +62,105 @@ const Stars = ({ rating = 0 }) => {
           }
           alt="star"
           className="w-4 h-4"
+          fallback="/assets/icons/star-empty.png"
         />
       ))}
     </div>
   );
-};
+});
+
+Stars.displayName = 'Stars';
 
 export default function Page() {
   const router = useRouter();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // filter & search
   const [filter, setFilter] = useState("semua");
   const [query, setQuery] = useState("");
 
+  // Debounce search untuk performa
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
   useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    fetch("/api/projects")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        if (!mounted) return;
-        const mapped = Array.isArray(data)
-          ? data.map((p) => ({
-              id: p.id,
-              title: p.title || "—",
-              status: p.status || "-",
-              category: p.category || "-",
-              group: p.group || "-",
-              thumbnail: p.thumbnail || PLACEHOLDER_THUMB,
-              rating: typeof p.rating === "number" ? p.rating : 0,
-              driveLink: p.driveLink || null,
-            }))
-          : [];
-        setRequests(mapped);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (!mounted) return;
-        setError(err.message || "Error");
-        setLoading(false);
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const fetchRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Starting fetch...'); // Debug log
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/requests`, {
+        credentials: "include",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Timeout setelah 10 detik
+        signal: AbortSignal.timeout(10000)
       });
-    return () => {
-      mounted = false;
-    };
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
+      
+      const data = await response.json();
+      console.log('Received data:', data); // Debug log
+      
+      if (Array.isArray(data)) {
+        setRequests(data);
+      } else {
+        console.warn('Expected array but got:', typeof data);
+        setRequests([]);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError(err.message || "Gagal memuat data");
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const fallback = useMemo(
-    () => [
-      {
-        id: "tmp-1",
-        title: "Loading…",
-        status: "Pending",
-        category: "-",
-        group: "-",
-        thumbnail: PLACEHOLDER_THUMB,
-        rating: 0,
-      },
-    ],
-    []
-  );
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
-  const dataToShow =
-    Array.isArray(requests) && requests.length ? requests : fallback;
+  // Optimasi filtering dengan useMemo
+  const filteredItems = useMemo(() => {
+    if (!Array.isArray(requests)) return [];
+    
+    return requests.filter((item) => {
+      const status = String(item.status || "").toLowerCase();
+      const filterLower = String(filter).toLowerCase();
 
-  const filteredItems = dataToShow.filter((item) => {
-    const s = String(item.status || "").toLowerCase();
+      // Filter status
+      if (filter && filter !== "semua") {
+        if (filterLower === "approved" && status !== "approved") return false;
+        if (filterLower === "rejected" && status !== "rejected") return false;
+        if (filterLower === "waiting for response" && !status.includes("waiting")) return false;
+      }
 
-    if (filter && filter !== "semua") {
-      if (s !== String(filter).toLowerCase()) return false;
-    }
+      // Filter search query
+      if (debouncedQuery && debouncedQuery.trim()) {
+        const q = debouncedQuery.trim().toLowerCase();
+        const inTitle = (item.title || "").toLowerCase().includes(q);
+        const inGroup = (item.group || "").toLowerCase().includes(q);
+        const inCategory = (item.category || "").toLowerCase().includes(q);
+        if (!(inTitle || inGroup || inCategory)) return false;
+      }
 
-    if (query && query.trim()) {
-      const q = query.trim().toLowerCase();
-      const inTitle = (item.title || "").toLowerCase().includes(q);
-      const inGroup = (item.group || "").toLowerCase().includes(q);
-      const inCategory = (item.category || "").toLowerCase().includes(q);
-      if (!(inTitle || inGroup || inCategory)) return false;
-    }
+      return true;
+    });
+  }, [requests, filter, debouncedQuery]);
 
-    return true;
-  });
-
-  const recordViewedThread = (id) => {
-    try {
-      const key = "viewed_threads_history";
-      const raw = sessionStorage.getItem(key);
-      const arr = raw ? JSON.parse(raw) : [];
-      if (arr[arr.length - 1] !== id) arr.push(id);
-      sessionStorage.setItem(key, JSON.stringify(arr));
-    } catch (e) {}
-  };
-
-  const openDetail = (id) => {
-    recordViewedThread(id);
-    router.push(`/detail/${id}`);
-  };
-
-  const getStatusStyle = (status) => {
+  const getStatusStyle = useCallback((status) => {
     const s = String(status || "").toLowerCase();
     if (s === "approved")
       return {
@@ -145,14 +176,37 @@ export default function Page() {
         bg: "bg-amber-50",
         icon: ICONS.waiting,
       };
-    if (s === "in progress" || s === "progress")
-      return { color: "text-blue-600", bg: "bg-blue-50", icon: ICONS.progress };
     return {
       color: "text-slate-600",
       bg: "bg-slate-100",
-      icon: ICONS.progress,
     };
-  };
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  // Skeleton loader untuk loading state
+  const SkeletonLoader = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="bg-white rounded-[12px] overflow-hidden border border-gray-200 shadow animate-pulse">
+          <div className="p-4">
+            <div className="h-36 bg-gray-200 rounded-[12px]"></div>
+          </div>
+          <div className="px-4 pb-5 space-y-3">
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-6 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="flex justify-between pt-4">
+              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+              <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <FixLayout>
@@ -184,7 +238,6 @@ export default function Page() {
 
           {/* Search & Filter Bar */}
           <div className="flex flex-col md:flex-row gap-4 mb-8 bg-white p-4 rounded-lg border border-gray-200">
-            {/* Search Input */}
             <div className="flex-1 flex items-center bg-[#5B585829] rounded-lg px-3 py-0.5">
               <div className="flex-1 relative">
                 <svg
@@ -210,7 +263,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Filter Section */}
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
                 Filter berdasarkan status
@@ -231,37 +283,43 @@ export default function Page() {
           {/* Results Info */}
           <div className="mb-4 text-sm text-gray-600">
             Menampilkan {filteredItems.length} capstone
+            {loading && " (memuat...)"}
           </div>
 
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center py-20">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#004A74]"></div>
-              <p className="text-gray-500 mt-4">Memuat data...</p>
-            </div>
-          )}
+          {/* Loading State dengan Skeleton */}
+          {loading && <SkeletonLoader />}
 
-          {/* Error State */}
+          {/* Error State dengan retry option */}
           {error && (
             <div className="text-center py-20">
-              <p className="text-red-600">Error: {error}</p>
+              <p className="text-red-600 mb-4">Error: {error}</p>
+              <button
+                onClick={handleRetry}
+                className="px-6 py-2 bg-[#004A74] text-white rounded-lg hover:bg-[#003956] transition-colors"
+              >
+                Coba Lagi
+              </button>
             </div>
           )}
 
           {/* Empty State */}
-          {!loading && filteredItems.length === 0 && (
+          {!loading && !error && filteredItems.length === 0 && (
             <div className="text-center py-20">
               <p className="text-gray-500 text-lg">
-                Tidak ada capstone yang ditemukan.
+                {requests.length === 0 
+                  ? "Belum ada request capstone" 
+                  : "Tidak ada capstone yang sesuai dengan filter"}
               </p>
               <p className="text-gray-400 text-sm mt-2">
-                Coba ubah kata kunci pencarian atau filter status
+                {requests.length === 0 
+                  ? "Mulai request capstone untuk melihat history di sini" 
+                  : "Coba ubah kata kunci pencarian atau filter status"}
               </p>
             </div>
           )}
 
           {/* Capstone Grid */}
-          {!loading && filteredItems.length > 0 && (
+          {!loading && !error && filteredItems.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
               {filteredItems.map((item) => {
                 const st = getStatusStyle(item.status);
@@ -269,19 +327,18 @@ export default function Page() {
 
                 return (
                   <article
-                    key={item.id ?? Math.random()}
+                    key={item.id}
                     className="bg-white rounded-[12px] overflow-hidden border border-gray-200 shadow hover:shadow-lg transition cursor-pointer flex flex-col"
-                    onClick={() => openDetail(item.id)}
+                    onClick={() => item.projectId && router.push(`/detail/${item.projectId}`)}
                   >
                     {/* Thumbnail */}
                     <div className="p-4">
-                      <div className="relative h-36 overflow-hidden bg-gradient-to-br from-red-100 via-orange-50 to-pink-100 rounded-[12px]">
-                        <img
-                          src={item.thumbnail || PLACEHOLDER_THUMB}
-                          alt={item.title || "thumb"}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <SafeImage
+                        src={item.thumbnail}
+                        alt={item.title}
+                        className="w-full h-36 object-cover rounded-[12px]"
+                        fallback={PLACEHOLDER_THUMB}
+                      />
                     </div>
 
                     {/* Content */}
@@ -290,41 +347,46 @@ export default function Page() {
                         {item.category || "-"}
                       </p>
                       <h3 className="text-base font-bold text-[#004A74] mt-2 leading-tight line-clamp-2">
-                        {item.title || "—"}
+                        {item.title}
                       </h3>
 
-                      {/* Rating */}
-                      <div className="mt-2">
+                      <div className="flex mt-2">
                         <Stars rating={rating} />
+                        <span className="text-xs text-gray-500">({item.commentCount} komentar)</span>
                       </div>
 
-                      {/* Group name */}
                       <p className="text-xs text-gray-500 mt-2">
                         {item.group || "-"}
                       </p>
 
-                      {/* Bottom section */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/detail/${item.projectId}/myrequest`);
+                        }}
+                        className="text-blue-600 text-sm font-medium hover:underline mt-2 text-left"
+                      >
+                        Lihat Detail Request
+                      </button>
+
                       <div className="flex items-center justify-between mt-auto pt-4">
-                        {/* Lihat Detail Capstone */}
                         <div className="flex items-center gap-2 text-[#004A74] font-semibold group">
                           <span className="text-sm relative">
                             Lihat Detail Capstone
                             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FED400] transition-all duration-300 group-hover:w-full"></span>
                           </span>
-                          <img
+                          <SafeImage
                             src="/assets/icons/arrow-right.png"
                             alt="arrow"
                             className="w-4 h-4 group-hover:translate-x-1 transition-transform"
                           />
                         </div>
 
-                        {/* Status + Link dokumen */}
                         <div className="flex flex-col items-end gap-1">
-                          {/* Status pill */}
                           <div
                             className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium w-fit ${st.bg} ${st.color}`}
                           >
-                            <img
+                            <SafeImage
                               src={st.icon}
                               alt={item.status}
                               className="w-4 h-4"
@@ -332,19 +394,17 @@ export default function Page() {
                             <span>{item.status || "-"}</span>
                           </div>
 
-                          {/* Link dokumen */}
-                          {String(item.status || "").toLowerCase() === "approved" &&
-                            item.driveLink && (
-                              <a
-                                href={item.driveLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-amber-700 text-xs font-medium hover:underline whitespace-nowrap"
-                              >
-                                Lihat Dokumen Capstone →
-                              </a>
-                            )}
+                          {item.status === "approved" && item.driveLink && (
+                            <a
+                              href={item.driveLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-amber-700 text-xs font-medium hover:underline whitespace-nowrap"
+                            >
+                              Lihat Dokumen Capstone →
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>

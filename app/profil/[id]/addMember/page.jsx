@@ -1,21 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
 
 export default function AddMemberPage() {
   const router = useRouter();
-  const params = useParams();
-  const id = params?.id;
-
   const [form, setForm] = useState({
     name: "",
     nim: "",
-    jurusan: "",
-    linkedin: "",
-    portofolio: "",
+    major: "",
+    linkedinUrl: "",
+    portfolioUrl: ""
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({
@@ -24,13 +22,43 @@ export default function AddMemberPage() {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    console.log("New member:", form);
+  try {
+    const token = localStorage.getItem('token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-    router.push(`/profil/${id}`);
-  };
+    const formData = new FormData();
+    formData.append('name', form.name);
+    formData.append('nim', form.nim);
+    formData.append('major', form.major);
+    formData.append('linkedinUrl', form.linkedinUrl);
+    formData.append('portfolioUrl', form.portfolioUrl);
+
+    const response = await fetch(`${apiUrl}/api/users/members`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      credentials: 'include',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add member');
+    }
+
+    alert('Anggota berhasil ditambahkan');
+    router.push("/profil");
+  } catch (err) {
+    console.error('Error adding member:', err);
+    alert('Gagal menambah anggota');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <FixLayout>
@@ -48,7 +76,7 @@ export default function AddMemberPage() {
             <span>›</span>
             <span
               className="hover:text-[#004A74] cursor-pointer"
-              onClick={() => router.push(`/profil/${id}`)}
+              onClick={() => router.push("/profil")}
             >
               Profil
             </span>
@@ -63,10 +91,7 @@ export default function AddMemberPage() {
           <div className="h-1 bg-[#FED400] rounded mb-8"></div>
 
           {/* FORM */}
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white border border-gray-200 rounded-lg shadow p-6 space-y-8"
-          >
+          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg shadow p-6 space-y-8">
             {/* BOX 1 – Informasi Dasar */}
             <div className="border border-gray-200 bg-gray-50 rounded-lg p-4">
               <h2 className="font-semibold text-gray-700 mb-4">
@@ -76,7 +101,7 @@ export default function AddMemberPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Nama Anggota
+                    Nama Anggota *
                   </label>
                   <input
                     name="name"
@@ -90,7 +115,7 @@ export default function AddMemberPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    NIM
+                    NIM *
                   </label>
                   <input
                     name="nim"
@@ -104,11 +129,11 @@ export default function AddMemberPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Jurusan
+                    Jurusan *
                   </label>
                   <input
-                    name="jurusan"
-                    value={form.jurusan}
+                    name="major"
+                    value={form.major}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#004A74]"
@@ -130,8 +155,8 @@ export default function AddMemberPage() {
                     Link LinkedIn
                   </label>
                   <input
-                    name="linkedin"
-                    value={form.linkedin}
+                    name="linkedinUrl"
+                    value={form.linkedinUrl}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#004A74]"
                     placeholder="https://linkedin.com/in/..."
@@ -143,8 +168,8 @@ export default function AddMemberPage() {
                     Link Portofolio
                   </label>
                   <input
-                    name="portofolio"
-                    value={form.portofolio}
+                    name="portfolioUrl"
+                    value={form.portfolioUrl}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#004A74]"
                     placeholder="https://portfolio.com/..."
@@ -157,17 +182,19 @@ export default function AddMemberPage() {
             <div className="flex items-center justify-end gap-4 pt-4">
               <button
                 type="button"
-                onClick={() => router.push(`/profil/${id}`)}
+                onClick={() => router.push("/profil")}
                 className="px-4 py-2 border text-gray-600 rounded-lg hover:bg-gray-100"
+                disabled={loading}
               >
                 Batal
               </button>
 
               <button
                 type="submit"
-                className="px-5 py-2 bg-[#004A74] text-white rounded-lg font-semibold hover:bg-[#003d5e]"
+                disabled={loading}
+                className="px-5 py-2 bg-[#004A74] text-white rounded-lg font-semibold hover:bg-[#003d5e] disabled:opacity-50"
               >
-                Simpan
+                {loading ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>
           </form>
