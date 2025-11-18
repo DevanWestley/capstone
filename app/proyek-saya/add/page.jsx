@@ -241,96 +241,102 @@ export default function AddProjectPage() {
 
     // Untuk edit mode, foto dan proposal tidak wajib jika sudah ada
     if (!isEditMode && projectPhotos.length === 0) {
-      newErrors.projectPhoto = "Foto proyek harus diupload";
-    }
+    newErrors.projectPhoto = "Foto proyek harus diupload";
+  } else if (isEditMode && projectPhotos.length === 0) {
+    // Opsional: beri warning tapi tidak error
+    console.warn("Tidak ada foto proyek");
+  }
 
-    if (!isEditMode && !proposalFile) {
-      newErrors.proposal = "Proposal (PDF) harus diupload";
-    }
+     if (!isEditMode && !proposalFile) {
+    newErrors.proposal = "Proposal (PDF) harus diupload";
+  }
 
-    console.log('Validation errors:', newErrors);
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  console.log('Validation errors:', newErrors);
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validate()) {
-      alert("Mohon lengkapi semua field yang wajib diisi");
+  if (!validate()) {
+    alert("Mohon lengkapi semua field yang wajib diisi");
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+      alert("Session expired. Please login again.");
+      router.push("/login");
       return;
     }
 
-    setSubmitting(true);
+    const formDataToSend = new FormData();
 
-    try {
-      const token = localStorage.getItem("token");
+    // Append text fields
+    formDataToSend.append('title', formData.title.trim());
+    formDataToSend.append('summary', formData.summary.trim());
+    formDataToSend.append('evaluation', formData.evaluation.trim());
+    formDataToSend.append('suggestion', formData.suggestion.trim());
+    formDataToSend.append('theme', formData.theme);
+
+    // Untuk edit mode, kirim informasi foto yang masih ada
+    if (isEditMode) {
+      // Kirim URL foto yang masih ada (tidak dihapus)
+      const existingPhotos = projectPhotos
+        .filter(photo => photo.isExisting)
+        .map(photo => photo.url);
       
-      if (!token) {
-        alert("Session expired. Please login again.");
-        router.push("/login");
-        return;
+      formDataToSend.append('existingPhotos', JSON.stringify(existingPhotos));
+    }
+
+    // Append foto baru
+    projectPhotos.forEach((photo, index) => {
+      if (!photo.isExisting && photo.file) {
+        console.log(`Appending new photo ${index}:`, photo.file.name);
+        formDataToSend.append("projectPhotos", photo.file);
       }
+    });
 
-      const formDataToSend = new FormData();
+    // Untuk edit mode, hanya append proposal jika file baru
+    if (proposalFile && !proposalFile.isExisting && proposalFile.file) {
+      console.log('Appending new proposal:', proposalFile.file.name);
+      formDataToSend.append("proposal", proposalFile.file);
+    }
 
-      // Append text fields
-      formDataToSend.append('title', formData.title.trim());
-      formDataToSend.append('summary', formData.summary.trim());
-      formDataToSend.append('evaluation', formData.evaluation.trim());
-      formDataToSend.append('suggestion', formData.suggestion.trim());
-      formDataToSend.append('theme', formData.theme);
-
-      // Untuk edit mode, handle photos yang baru saja diupload
-      projectPhotos.forEach((photo, index) => {
-        if (!photo.isExisting && photo.file) {
-          console.log(`Appending new photo ${index}:`, photo.file.name);
-          formDataToSend.append("projectPhotos", photo.file);
-        }
-      });
-
-      // Untuk edit mode, hanya append proposal jika file baru
-      if (proposalFile && !proposalFile.isExisting && proposalFile.file) {
-        console.log('Appending new proposal:', proposalFile.file.name);
-        formDataToSend.append("proposal", proposalFile.file);
+    // Debug: log all FormData entries
+    console.log("=== FormData entries ===");
+    for (let [key, value] of formDataToSend.entries()) {
+      if (value instanceof File) {
+        console.log(key, `File: ${value.name} (${value.size} bytes)`);
+      } else {
+        console.log(key, value);
       }
+    }
 
-      // Debug: log all FormData entries
-      console.log("=== FormData entries ===");
-      let formDataDebug = {};
-      for (let [key, value] of formDataToSend.entries()) {
-        if (value instanceof File) {
-          console.log(key, `File: ${value.name} (${value.size} bytes)`);
-          if (!formDataDebug[key]) formDataDebug[key] = [];
-          formDataDebug[key].push(`File: ${value.name}`);
-        } else {
-          console.log(key, value);
-          if (!formDataDebug[key]) formDataDebug[key] = [];
-          formDataDebug[key].push(value);
-        }
-      }
-      console.log('FormData summary:', formDataDebug);
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const url = isEditMode 
+      ? `${backendUrl}/api/projects/${urlId}` 
+      : `${backendUrl}/api/projects`;
+    
+    const method = isEditMode ? "PUT" : "POST";
 
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const url = isEditMode 
-        ? `${backendUrl}/api/projects/${urlId}` 
-        : `${backendUrl}/api/projects`;
-      
-      const method = isEditMode ? "PUT" : "POST";
+    console.log('=== SENDING REQUEST ===');
+    console.log('URL:', url);
+    console.log('Method:', method);
 
-      console.log('=== SENDING REQUEST ===');
-      console.log('URL:', url);
-      console.log('Method:', method);
-      console.log('isEditMode:', isEditMode);
-
-      const response = await fetch(url, {
-        method,
-        credentials: "include",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formDataToSend,
-      });
+    const response = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // JANGAN set Content-Type untuk FormData, biarkan browser set otomatis
+      },
+      body: formDataToSend,
+    });
 
       console.log("=== RESPONSE RECEIVED ===");
       console.log("Response status:", response.status);
@@ -359,14 +365,12 @@ export default function AddProjectPage() {
       }, 100);
 
     } catch (error) {
-      console.error("=== ERROR SAVING PROJECT ===");
-      console.error("Error:", error);
-      
-      alert(`Error: ${error.message}`);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    console.error("Error:", error);
+    alert(`Error: ${error.message}`);
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) {
     return (
