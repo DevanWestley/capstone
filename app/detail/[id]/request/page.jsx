@@ -23,7 +23,7 @@ function useProjectDetail(id) {
     setLoading(true);
     setError(null);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ;
     fetch(`${apiUrl}/api/projects/${id}`)
       .then(async (res) => {
         if (!res.ok) {

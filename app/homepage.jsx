@@ -64,7 +64,7 @@ export default function HomePage() {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ;
         
         // Fetch projects dengan limit 6 dan status Open
         const response = await fetch(`${apiUrl}/api/projects?limit=6&status=Open`);
