@@ -14,9 +14,33 @@ export default function Header() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [profilePhoto, setProfilePhoto] = useState(null);
-  const [userId, setUserId] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState(localStorage.getItem("userId") || null);
+
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'}/auth/me`, {
+  method: 'GET',
+  credentials: 'include',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+      if (res.ok) {
+        const userData = await res.json();
+        setUserId(userData._id || userData.id);
+        localStorage.setItem("userId", userData._id || userData.id);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  fetchUser();
+}, []);
+
 
   useEffect(() => {
     const checkAuthStatus = async () => {
