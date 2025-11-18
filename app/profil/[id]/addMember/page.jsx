@@ -23,42 +23,35 @@ export default function AddMemberPage() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const token = localStorage.getItem('token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
-    const formData = new FormData();
-    formData.append('name', form.name);
-    formData.append('nim', form.nim);
-    formData.append('major', form.major);
-    formData.append('linkedinUrl', form.linkedinUrl);
-    formData.append('portfolioUrl', form.portfolioUrl);
+      const response = await fetch(`${apiBaseUrl}/users/members`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(form)
+      });
 
-    const response = await fetch(`${apiUrl}/api/users/members`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      credentials: 'include',
-      body: formData
-    });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add member');
+      }
 
-    if (!response.ok) {
-      throw new Error('Failed to add member');
+      alert('Anggota berhasil ditambahkan');
+      router.push("/profil");
+    } catch (err) {
+      console.error('Error adding member:', err);
+      alert('Gagal menambah anggota: ' + err.message);
+    } finally {
+      setLoading(false);
     }
-
-    alert('Anggota berhasil ditambahkan');
-    router.push("/profil");
-  } catch (err) {
-    console.error('Error adding member:', err);
-    alert('Gagal menambah anggota');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <FixLayout>
