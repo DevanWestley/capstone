@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import FixLayout from "../../../../components/FixLayout";
+import FixLayout from "../../../components/FixLayout";
 
 export default function ProfileDetailPage() {
   const router = useRouter();
@@ -95,11 +95,11 @@ export default function ProfileDetailPage() {
   };
 
   const handleAddMember = () => {
-    router.push('/profil/tambah-anggota');
+    router.push('/profil/addMember');
   };
 
   const handleEditMember = (memberId) => {
-    router.push(`/profil/edit-anggota/${memberId}`);
+    router.push(`/profil/editMember/${memberId}`);
   };
 
   // Check if current user is viewing their own profile

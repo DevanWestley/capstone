@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import FixLayout from "../../../../../components/FixLayout";
-
+import FixLayout from "../../../../components/FixLayout";
 export default function EditMemberPage() {
   const router = useRouter();
   const params = useParams();

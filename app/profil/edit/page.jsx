@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import FixLayout from "../../../../components/FixLayout";
-
+import FixLayout from "../../../components/FixLayout";
 export default function ProfileEditPage() {
   const router = useRouter();
   const [form, setForm] = useState({
+     _id: "",
     groupName: "",
     email: "",
     department: "",
@@ -35,6 +35,7 @@ export default function ProfileEditPage() {
 
         const data = await response.json();
         setForm({
+          _id: data._id || "",  
           groupName: data.groupName || "",
           email: data.email || "",
           department: data.department || "",
@@ -53,9 +54,14 @@ export default function ProfileEditPage() {
     fetchProfile();
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = async (userId) => {
     try {
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+      if (!form.groupName || !form.email) {
+  alert("Nama Kelompok dan Email wajib diisi!");
+  return;
+}
+
 
       const response = await fetch(`${apiBaseUrl}/users/profile`, {
         method: 'PUT',
@@ -73,7 +79,7 @@ export default function ProfileEditPage() {
 
       const data = await response.json();
       alert("Data tersimpan!");
-      router.push("/profil");
+      router.push(`/profil/${userId}`);
     } catch (err) {
       console.error('Error updating profile:', err);
       alert('Gagal menyimpan perubahan: ' + err.message);
@@ -109,7 +115,7 @@ export default function ProfileEditPage() {
             <span>›</span>
             <span
               className="hover:text-[#004A74] cursor-pointer"
-              onClick={() => router.push("/profil")}
+              onClick={() => router.push(`/profil/${form._id}`)}
             >
               Profil
             </span>
@@ -214,14 +220,14 @@ export default function ProfileEditPage() {
             {/* Buttons */}
             <div className="flex justify-end mt-6 gap-4">
               <button
-                onClick={() => router.push("/profil")}
+                onClick={() => router.push(`/profil/${form._id}`)}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-100"
               >
                 Batal
               </button>
 
               <button
-                onClick={handleSave}
+                onClick={() => handleSave(form._id)}
                 className="px-4 py-2 bg-[#004A74] text-white rounded shadow hover:bg-[#003d5e]"
               >
                 Simpan Perubahan

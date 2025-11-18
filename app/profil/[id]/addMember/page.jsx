@@ -3,10 +3,14 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import FixLayout from "../../../../components/FixLayout";
+import { useParams } from 'next/navigation';
 
 export default function AddMemberPage() {
+  const params = useParams();
+  const groupId = params.groupId;
   const router = useRouter();
   const [form, setForm] = useState({
+    _id: "",
     name: "",
     nim: "",
     major: "",
@@ -44,7 +48,7 @@ export default function AddMemberPage() {
       }
 
       alert('Anggota berhasil ditambahkan');
-      router.push("/profil");
+      router.push(`/profil/${groupId}`);
     } catch (err) {
       console.error('Error adding member:', err);
       alert('Gagal menambah anggota: ' + err.message);
@@ -69,7 +73,7 @@ export default function AddMemberPage() {
             <span>›</span>
             <span
               className="hover:text-[#004A74] cursor-pointer"
-              onClick={() => router.push("/profil")}
+              onClick={() => router.push(`/profil/${groupId}`)}
             >
               Profil
             </span>
@@ -84,7 +88,7 @@ export default function AddMemberPage() {
           <div className="h-1 bg-[#FED400] rounded mb-8"></div>
 
           {/* FORM */}
-          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg shadow p-6 space-y-8">
+          <form  onSubmit={(e) => handleSubmit(e)}  className="bg-white border border-gray-200 rounded-lg shadow p-6 space-y-8">
             {/* BOX 1 – Informasi Dasar */}
             <div className="border border-gray-200 bg-gray-50 rounded-lg p-4">
               <h2 className="font-semibold text-gray-700 mb-4">
@@ -175,7 +179,7 @@ export default function AddMemberPage() {
             <div className="flex items-center justify-end gap-4 pt-4">
               <button
                 type="button"
-                onClick={() => router.push("/profil")}
+                onClick={() => router.push(`/profil/${groupId}` )}
                 className="px-4 py-2 border text-gray-600 rounded-lg hover:bg-gray-100"
                 disabled={loading}
               >
