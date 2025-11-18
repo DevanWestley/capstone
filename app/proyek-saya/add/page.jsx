@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FixLayout from "../../../components/FixLayout";
+import { Suspense } from 'react';
 
 export default function AddProjectPage() {
   const router = useRouter();
@@ -381,6 +382,7 @@ const removeProjectPhoto = (index) => {
 }
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <FixLayout>
       <div className="min-h-screen bg-[#FCFCFC]">
         <div className="max-w-4xl mx-auto px-6 md:px-8 py-8">
@@ -663,5 +665,6 @@ const removeProjectPhoto = (index) => {
         </div>
       </div>
     </FixLayout>
+    </Suspense>
   );
 }
