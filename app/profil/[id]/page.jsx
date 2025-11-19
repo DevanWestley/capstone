@@ -21,10 +21,10 @@ export default function ProfileDetailPage() {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
         // Determine which endpoint to use based on whether it's own profile or other profile
-        const endpoint = profileId === savedUserId ? '/users/me' : `/users/${profileId}`;
+        const endpoint = profileId === savedUserId ? '/api/users/me' : `/api/users/${profileId}`;
 
         const response = await fetch(`${apiBaseUrl}${endpoint}`, {
           method: 'GET',
@@ -57,9 +57,9 @@ export default function ProfileDetailPage() {
     if (!confirm('Hapus anggota ini?')) return;
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-      const response = await fetch(`${apiBaseUrl}/users/members/${memberId}`, {
+      const response = await fetch(`${apiBaseUrl}/api/users/members/${memberId}`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {
@@ -73,7 +73,7 @@ export default function ProfileDetailPage() {
       }
 
       // Refresh profile data
-      const updatedResponse = await fetch(`${apiBaseUrl}/users/me`, {
+      const updatedResponse = await fetch(`${apiBaseUrl}/api/users/me`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'

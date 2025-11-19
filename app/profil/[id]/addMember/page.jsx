@@ -31,9 +31,9 @@ export default function AddMemberPage() {
     setLoading(true);
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
-      const response = await fetch(`${apiBaseUrl}/users/members`, {
+      const response = await fetch(`${apiBaseUrl}/api/users/members`, {
         method: 'POST',
         credentials: 'include',
         headers: {

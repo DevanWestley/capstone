@@ -17,7 +17,7 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState(null);
-  
+
 useEffect(() => {
   const fetchUser = async () => {
     try {
@@ -32,7 +32,7 @@ useEffect(() => {
       }
 
       // Fetch terbaru dari backend
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'}/auth/me`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/me`, {
         method: 'GET',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
@@ -82,7 +82,7 @@ useEffect(() => {
   const handleLogout = async () => {
     try {
       // Call backend logout endpoint
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'}/auth/logout`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
         headers: {
